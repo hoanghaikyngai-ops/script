@@ -59,14 +59,14 @@ getgenv().Config = {
     },
 }
 
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+local Rayfield = loadstring(game:HttpGet("https://raw.githubusercontent.com/hoanghaikyngai-ops/script/refs/heads/main/GrowGarden.lua"))()
 
 local Window = Rayfield:CreateWindow({
    Name = "hoanghaizhub | Grow a Garden 2",
    LoadingTitle = "Đang tải bảng điều khiển...",
-   LoadingSubtitle = "by Gemini Custom",
+   LoadingSubtitle = "by hoanghaidz",
    ConfigurationSaving = {
-      Enabled = false
+      Enabled = true
    },
    KeySystem = false
 })
@@ -218,4 +218,3 @@ Rayfield:Notify({
    Duration = 5,
    Image = 4483362458,
 })
-loadstring(game:HttpGet("https://raw.githubusercontent.com/hoanghaikyngai-ops/script/refs/heads/main/GrowGarden.lua"))()

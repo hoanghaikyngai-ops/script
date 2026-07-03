@@ -218,3 +218,4 @@ Rayfield:Notify({
    Duration = 5,
    Image = 4483362458,
 })
+loadstring(game:HttpGet)("https://raw.githubusercontent.com/hoanghaikyngai-ops/script/refs/heads/main/GrowGarden.lua)()

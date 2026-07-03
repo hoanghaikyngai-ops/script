@@ -1,5 +1,29 @@
-local Config = getgenv().Config
+-- Safe initialization for global Config to avoid nil indexing errors
+local global_env = (type(getgenv) == "function" and getgenv()) or _G
+global_env.Config = global_env.Config or {}
+local Config = global_env.Config
 
+-- Ensure expected subtables and default keys exist
+Config.Setting = Config.Setting or {}
+Config.Main = Config.Main or {}
+Config["Plant Seed"] = Config["Plant Seed"] or { Enable = false }
+Config["Buy Seed"] = Config["Buy Seed"] or { Enable = false }
+Config["Buy Gear"] = Config["Buy Gear"] or { Enable = false }
+Config["Buy Pet"] = Config["Buy Pet"] or { Enable = false }
+Config["Use Gear"] = Config["Use Gear"] or { ["Use Watering Can"] = false, ["Use Sprinkler"] = false }
+
+-- Per-key defaults (only set when nil)
+if Config.Setting["White Screen"] == nil then Config.Setting["White Screen"] = false end
+if Config.Main["FPS Boost"] == nil then Config.Main["FPS Boost"] = false end
+if Config.Main["Max Plant"] == nil then Config.Main["Max Plant"] = 100 end
+if Config.Main["Expand Garden"] == nil then Config.Main["Expand Garden"] = false end
+if Config.Main["Destroy Plants Priced Under 40% Most Expensive Plant"] == nil then
+    Config.Main["Destroy Plants Priced Under 40% Most Expensive Plant"] = false
+end
+if Config.Main["Collect Gold/Rainbow Seed"] == nil then Config.Main["Collect Gold/Rainbow Seed"] = false end
+if Config.Main["Attack Player Steal Your Fruits"] == nil then Config.Main["Attack Player Steal Your Fruits"] = false end
+
+-- Begin UI setup (uses cached `Config` variable)
 local MainTab = Window:CreateTab("Cài Đặt Chính", 4483362458) 
 
 MainTab:CreateSection("Tối Ưu Hoá")

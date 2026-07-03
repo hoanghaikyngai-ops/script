@@ -1,11 +1,13 @@
+local Config = getgenv().Config
+
 local MainTab = Window:CreateTab("Cài Đặt Chính", 4483362458) 
 
 MainTab:CreateSection("Tối Ưu Hoá")
 MainTab:CreateToggle({
    Name = "Màn Hình Trắng (Giảm Lag)",
-   CurrentValue = getgenv().Config.Setting["White Screen"],
+   CurrentValue = Config.Setting["White Screen"],
    Callback = function(Value)
-        getgenv().Config.Setting["White Screen"] = Value
+        Config.Setting["White Screen"] = Value
         if Value then
             game:GetService("RunService"):Set3dRenderingEnabled(false) -- Cách xịn hơn để giảm lag
         else
@@ -16,9 +18,9 @@ MainTab:CreateToggle({
 
 MainTab:CreateToggle({
    Name = "Tăng FPS (Xóa Texture)",
-   CurrentValue = getgenv().Config.Main["FPS Boost"],
+   CurrentValue = Config.Main["FPS Boost"],
    Callback = function(Value)
-        getgenv().Config.Main["FPS Boost"] = Value
+        Config.Main["FPS Boost"] = Value
    end,
 })
 
@@ -28,41 +30,41 @@ MainTab:CreateSlider({
    Range = {10, 500},
    Increment = 10,
    Suffix = "Cây",
-   CurrentValue = getgenv().Config.Main["Max Plant"],
+   CurrentValue = Config.Main["Max Plant"],
    Callback = function(Value)
-        getgenv().Config.Main["Max Plant"] = Value
+        Config.Main["Max Plant"] = Value
    end,
 })
 
 MainTab:CreateToggle({
    Name = "Tự Động Mở Rộng Vườn",
-   CurrentValue = getgenv().Config.Main["Expand Garden"],
+   CurrentValue = Config.Main["Expand Garden"],
    Callback = function(Value)
-        getgenv().Config.Main["Expand Garden"] = Value
+        Config.Main["Expand Garden"] = Value
    end,
 })
 
 MainTab:CreateToggle({
    Name = "Xóa Cây Rẻ Tiền (<40% Giá Trị)",
-   CurrentValue = getgenv().Config.Main["Destroy Plants Priced Under 40% Most Expensive Plant"],
+   CurrentValue = Config.Main["Destroy Plants Priced Under 40% Most Expensive Plant"],
    Callback = function(Value)
-        getgenv().Config.Main["Destroy Plants Priced Under 40% Most Expensive Plant"] = Value
+        Config.Main["Destroy Plants Priced Under 40% Most Expensive Plant"] = Value
    end,
 })
 
 MainTab:CreateToggle({
    Name = "Tự Nhặt Hạt Vàng/Cầu Vồng",
-   CurrentValue = getgenv().Config.Main["Collect Gold/Rainbow Seed"],
+   CurrentValue = Config.Main["Collect Gold/Rainbow Seed"],
    Callback = function(Value)
-        getgenv().Config.Main["Collect Gold/Rainbow Seed"] = Value
+        Config.Main["Collect Gold/Rainbow Seed"] = Value
    end,
 })
 
 MainTab:CreateToggle({
    Name = "Tấn Công Người Trộm Quả",
-   CurrentValue = getgenv().Config.Main["Attack Player Steal Your Fruits"],
+   CurrentValue = Config.Main["Attack Player Steal Your Fruits"],
    Callback = function(Value)
-        getgenv().Config.Main["Attack Player Steal Your Fruits"] = Value
+        Config.Main["Attack Player Steal Your Fruits"] = Value
    end,
 })
 local FarmTab = Window:CreateTab("Nông Trại", 4483362458)
@@ -70,17 +72,17 @@ local FarmTab = Window:CreateTab("Nông Trại", 4483362458)
 FarmTab:CreateSection("Quản Lý Hạt Giống")
 FarmTab:CreateToggle({
    Name = "Tự Động Trồng Hạt Giống",
-   CurrentValue = getgenv().Config["Plant Seed"].Enable,
+   CurrentValue = Config["Plant Seed"].Enable,
    Callback = function(Value)
-        getgenv().Config["Plant Seed"].Enable = Value
+        Config["Plant Seed"].Enable = Value
    end,
 })
 
 FarmTab:CreateToggle({
    Name = "Tự Động Mua Hạt Giống",
-   CurrentValue = getgenv().Config["Buy Seed"].Enable,
+   CurrentValue = Config["Buy Seed"].Enable,
    Callback = function(Value)
-        getgenv().Config["Buy Seed"].Enable = Value
+        Config["Buy Seed"].Enable = Value
    end,
 })
 local GearTab = Window:CreateTab("Trang Bị & Pet", 4483362458)
@@ -88,33 +90,33 @@ local GearTab = Window:CreateTab("Trang Bị & Pet", 4483362458)
 GearTab:CreateSection("Mua Sắm Tự Động")
 GearTab:CreateToggle({
    Name = "Tự Động Mua Trang Bị",
-   CurrentValue = getgenv().Config["Buy Gear"].Enable,
+   CurrentValue = Config["Buy Gear"].Enable,
    Callback = function(Value)
-        getgenv().Config["Buy Gear"].Enable = Value
+        Config["Buy Gear"].Enable = Value
    end,
 })
 
 GearTab:CreateToggle({
    Name = "Tự Động Mua Thú Cưng (Pet)",
-   CurrentValue = getgenv().Config["Buy Pet"].Enable,
+   CurrentValue = Config["Buy Pet"].Enable,
    Callback = function(Value)
-        getgenv().Config["Buy Pet"].Enable = Value
+        Config["Buy Pet"].Enable = Value
    end,
 })
 
 GearTab:CreateSection("Sử Dụng Trang Bị")
 GearTab:CreateToggle({
    Name = "Sử Dụng Bình Tưới Nước",
-   CurrentValue = getgenv().Config["Use Gear"]["Use Watering Can"],
+   CurrentValue = Config["Use Gear"]["Use Watering Can"],
    Callback = function(Value)
-        getgenv().Config["Use Gear"]["Use Watering Can"] = Value
+        Config["Use Gear"]["Use Watering Can"] = Value
    end,
 })
 
 GearTab:CreateToggle({
    Name = "Sử Dụng Vòi Phun Nước",
-   CurrentValue = getgenv().Config["Use Gear"]["Use Sprinkler"],
+   CurrentValue = Config["Use Gear"]["Use Sprinkler"],
    Callback = function(Value)
-        getgenv().Config["Use Gear"]["Use Sprinkler"] = Value
+        Config["Use Gear"]["Use Sprinkler"] = Value
    end,
 })

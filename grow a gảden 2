@@ -1,7 +1,7 @@
 getgenv().Config = {
     ["Setting"] = {
         ["White Screen"] = false
-    },
+n    },
     ["Main"] = {
         ["Max Plant"] = 200,
         ["Expand Garden"] = true,
@@ -12,11 +12,11 @@ getgenv().Config = {
     },
     ["Plant Seed"] = {
         ["Enable"] = true,
-        ["Seed"] = {"Bamboo","Blueberry","Apple","Tomato","Banana","Sunflower","Corn","Mushroom","Cherry","Mango","Grape","Coconut","Cactus","Baby Cactus","Pomegranate","Pineapple","Dragon Fruit",...}
+        ["Seed"] = {"Bamboo","Blueberry","Apple","Tomato","Banana","Sunflower","Corn","Mushroom","Cherry","Mango","Grape","Coconut","Cactus","Baby Cactus","Pomegranate","Pineapple","Dragon Fruit"}
     },
     ["Buy Seed"] = {
         ["Enable"] = true,
-        ["Seed"] = {"Bamboo","Blueberry","Apple","Tomato","Banana","Sunflower","Corn","Mushroom","Cherry","Mango","Grape","Coconut","Cactus","Baby Cactus","Pomegranate","Pineapple","Dragon Fruit",...}
+        ["Seed"] = {"Bamboo","Blueberry","Apple","Tomato","Banana","Sunflower","Corn","Mushroom","Cherry","Mango","Grape","Coconut","Cactus","Baby Cactus","Pomegranate","Pineapple","Dragon Fruit"}
     },
     ["Buy Gear"] = {
         ["Enable"] = true,
@@ -63,7 +63,16 @@ local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 -- Thay đổi dòng nạp thư viện sang liên kết chính thức của Sirius Rayfield
-local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
+local Rayfield = nil
+pcall(function()
+    Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
+end)
+
+if not Rayfield then
+    warn("Rayfield GUI failed to load. UI features will be limited.")
+    return
+end
+
 local Window = Rayfield:CreateWindow({
    Name = "hoanghaizhub | Grow a Garden 2",
    LoadingTitle = "Đang tải bảng điều khiển...",
@@ -75,36 +84,119 @@ local Window = Rayfield:CreateWindow({
    },
    KeySystem = false
 })
+
+-- Helper: robust remote finder
+local function findRemote(...)
+    local names = {...}
+    for _, name in ipairs(names) do
+        if not name then continue end
+        -- direct child of ReplicatedStorage
+        local r = ReplicatedStorage:FindFirstChild(name)
+        if r then return r end
+        -- inside a Remotes folder
+        local remotesFolder = ReplicatedStorage:FindFirstChild("Remotes")
+        if remotesFolder then
+            r = remotesFolder:FindFirstChild(name)
+            if r then return r end
+        end
+        -- sometimes inside 'Events' / 'RemoteEvents' folders
+        local eventsFolder = ReplicatedStorage:FindFirstChild("Events") or ReplicatedStorage:FindFirstChild("RemoteEvents")
+        if eventsFolder then
+            r = eventsFolder:FindFirstChild(name)
+            if r then return r end
+        end
+    end
+    return nil
+end
+
+-- Helper: safe FireServer wrapper to avoid runtime errors
+local function safeFire(remote, ...)
+    if not remote then return false end
+    local ok, err = pcall(function() remote:FireServer(...) end)
+    if not ok then
+        -- Try Fire otherwise Invoke if RemoteFunction
+        if typeof(remote) == "Instance" and remote:IsA("RemoteFunction") then
+            pcall(function() remote:InvokeServer(...) end)
+        end
+    end
+    return true
+end
+
+-- Auto buy seeds (robust, non-blocking)
 local function doAutoBuySeed()
-    if not getgenv().Config["Buy Seed"]["Enable"] then return end
-    local buyRemote = ReplicatedStorage:FindFirstChild("BuyItem") or ReplicatedStorage:FindFirstChild("BuySeed") or (ReplicatedStorage:FindFirstChild("Remotes") and ReplicatedStorage.Remotes:FindFirstChild("BuySeed"))
-    if buyRemote then
-        for _, seed in ipairs(getgenv().Config["Buy Seed"]["Seed"]) do
-            if not getgenv().Config["Buy Seed"]["Enable"] then break end
-            buyRemote:FireServer(seed, 1)
+    if not getgenv().Config or not getgenv().Config["Buy Seed"] or not getgenv().Config["Buy Seed"]["Enable"] then return end
+    local buyRemote = findRemote("BuyItem", "BuySeed", "Buy")
+    if not buyRemote then return end
+    local seeds = getgenv().Config["Buy Seed"]["Seed"] or {}
+    for _, seed in ipairs(seeds) do
+        if not getgenv().Config["Buy Seed"]["Enable"] then break end
+        if type(seed) == "string" then
+            pcall(function() safeFire(buyRemote, seed, 1) end)
             task.wait(0.1)
         end
     end
 end
 
+-- Auto plant seeds into empty plots (robust checks)
 local function doAutoPlant()
-    if not getgenv().Config["Plant Seed"]["Enable"] then return end
-    local plantRemote = ReplicatedStorage:FindFirstChild("PlantSeed") or (ReplicatedStorage:FindFirstChild("Remotes") and ReplicatedStorage.Remotes:FindFirstChild("PlantSeed"))
-    local myPlot = workspace:FindFirstChild("Plots") and workspace.Plots:FindFirstChild(LocalPlayer.Name)
-    if myPlot and plantRemote then
-        for _, zone in ipairs(myPlot:GetChildren()) do
-            if not getgenv().Config["Plant Seed"]["Enable"] then break end
-            if #zone:GetChildren() == 0 then
-                local currentSeed = getgenv().Config["Plant Seed"]["Seed"][1]
-                if currentSeed then
-                    plantRemote:FireServer(currentSeed, zone)
-                    task.wait(0.2)
-                end
-            end
+    if not getgenv().Config or not getgenv().Config["Plant Seed"] or not getgenv().Config["Plant Seed"]["Enable"] then return end
+    if not LocalPlayer then LocalPlayer = Players.LocalPlayer end
+    if not LocalPlayer or not LocalPlayer.Name then return end
+    local plantRemote = findRemote("PlantSeed", "Plant")
+    if not plantRemote then return end
+
+    local plotsFolder = workspace:FindFirstChild("Plots")
+    if not plotsFolder then return end
+    local myPlot = plotsFolder:FindFirstChild(LocalPlayer.Name)
+    if not myPlot then return end
+
+    local seeds = getgenv().Config["Plant Seed"]["Seed"] or {}
+    local chosenSeed = seeds[1]
+    if type(chosenSeed) ~= "string" then return end
+
+    for _, zone in ipairs(myPlot:GetChildren()) do
+        if not getgenv().Config["Plant Seed"]["Enable"] then break end
+        if typeof(zone) ~= "Instance" then continue end
+        local isEmpty = (#zone:GetChildren() == 0)
+        if isEmpty then
+            pcall(function()
+                safeFire(plantRemote, chosenSeed, zone)
+            end)
+            task.wait(0.2)
         end
     end
 end
 
+-- Centralized start/stop logic to avoid duplicated code
+local isRunning = false
+local farmLoop
+local function startAutoFarm()
+    if isRunning then
+        Rayfield:Notify({Name = "Thông báo", Content = "Hệ thống Auto Farm đang hoạt động ngầm!", Duration = 3})
+        return
+    end
+    isRunning = true
+    Rayfield:Notify({Name = "Thành công", Content = "Đã kích hoạt vòng lặp Auto Farm!", Duration = 3})
+    farmLoop = task.spawn(function()
+        while isRunning do
+            local ok, err = pcall(function()
+                doAutoBuySeed()
+                doAutoPlant()
+            end)
+            if not ok then
+                warn("AutoFarm loop error:", err)
+            end
+            task.wait(1)
+        end
+    end)
+end
+
+local function stopAutoFarm()
+    isRunning = false
+    Rayfield:Notify({Name = "Thông báo", Content = "Đã tắt hoàn toàn các tác vụ Auto Farm.", Duration = 3})
+end
+
+-- UI
 local MainTab = Window:CreateTab("Cài Đặt Chính", 4483362458)
 
 MainTab:CreateToggle({
@@ -170,6 +262,7 @@ MainTab:CreateToggle({
       end
    end,
 })
+
 local FarmTab = Window:CreateTab("Trồng & Mua Hạt", 4483362458)
 
 FarmTab:CreateToggle({
@@ -183,6 +276,7 @@ FarmTab:CreateToggle({
    CurrentValue = getgenv().Config["Buy Seed"]["Enable"],
    Callback = function(Value) getgenv().Config["Buy Seed"]["Enable"] = Value end,
 })
+
 local UpgradeTab = Window:CreateTab("Trang Bị & Pet", 4483362458)
 
 UpgradeTab:CreateToggle({
@@ -208,6 +302,7 @@ UpgradeTab:CreateToggle({
    CurrentValue = getgenv().Config["Buy Pet"]["Enable"],
    Callback = function(Value) getgenv().Config["Buy Pet"]["Enable"] = Value end,
 })
+
 local FavoriteTab = Window:CreateTab("Ưu Tiên", 4483362458)
 
 FavoriteTab:CreateToggle({
@@ -225,6 +320,7 @@ FavoriteTab:CreateSlider({
    ValueName = "kg",
    Callback = function(Value) getgenv().Config["Favorite"]["Minium Weight"] = Value end,
 })
+
 local MailboxTab = Window:CreateTab("Hộp Thư", 4483362458)
 
 MailboxTab:CreateToggle({
@@ -239,6 +335,7 @@ MailboxTab:CreateInput({
    RemoveTextmarking = false,
    Callback = function(Value) getgenv().Config["Mailbox"]["Username"] = Value end,
 })
+
 local WebhookTab = Window:CreateTab("Webhook Discord", 4483362458)
 
 WebhookTab:CreateToggle({
@@ -253,35 +350,19 @@ WebhookTab:CreateInput({
    RemoveTextmarking = false,
    Callback = function(Value) getgenv().Config["Webhook"]["UrlWebhook"] = Value end
 })
+
 local ActionTab = Window:CreateTab("Kích Hoạt", 4483362458)
-local isRunning = false
 
 ActionTab:CreateButton({
    Name = "BẮT ĐẦU CHẠY SCRIPT (START)",
    Callback = function()
-      if isRunning then 
-         Rayfield:Notify({Name = "Thông báo", Content = "Hệ thống Auto Farm đang hoạt động ngầm!", Duration = 3})
-         return 
-      end
-
-      isRunning = true
-      Rayfield:Notify({Name = "Thành công", Content = "Đã kích hoạt vòng lặp Auto Farm!", Duration = 3})
-      task.spawn(function()
-         while isRunning do
-            pcall(function()
-                doAutoBuySeed()
-                doAutoPlant()
-            end)
-            task.wait(1)
-         end
-      end)
+      startAutoFarm()
    end,
 })
 
 ActionTab:CreateButton({
    Name = "DỪNG SCRIPT (STOP)",
    Callback = function()
-      isRunning = false
-      Rayfield:Notify({Name = "Thông báo", Content = "Đã tắt hoàn toàn các tác vụ Auto Farm.", Duration = 3})
+      stopAutoFarm()
    end,
 })

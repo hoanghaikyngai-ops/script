@@ -12,11 +12,11 @@ getgenv().Config = {
     },
     ["Plant Seed"] = {
         ["Enable"] = true,
-        ["Seed"] = {"Bamboo","Blueberry","Apple","Tomato","Banana","Sunflower","Corn","Mushroom","Cherry","Mango","Grape","Coconut","Cactus","Baby Cactus","Pomegranate","Pineapple","Dragon Fruit","Poison Apple","Moon Bloom","Poison Ivy","Ghost Pepper","Venus Fly Trap","Dragon's Breath"}
+        ["Seed"] = {"Bamboo","Blueberry","Apple","Tomato","Banana","Sunflower","Corn","Mushroom","Cherry","Mango","Grape","Coconut","Cactus","Baby Cactus","Pomegranate","Pineapple","Dragon Fruit",...}
     },
     ["Buy Seed"] = {
         ["Enable"] = true,
-        ["Seed"] = {"Bamboo","Blueberry","Apple","Tomato","Banana","Sunflower","Corn","Mushroom","Cherry","Mango","Grape","Coconut","Cactus","Baby Cactus","Pomegranate","Pineapple","Dragon Fruit","Poison Apple","Moon Bloom","Poison Ivy","Ghost Pepper","Venus Fly Trap","Dragon's Breath"}
+        ["Seed"] = {"Bamboo","Blueberry","Apple","Tomato","Banana","Sunflower","Corn","Mushroom","Cherry","Mango","Grape","Coconut","Cactus","Baby Cactus","Pomegranate","Pineapple","Dragon Fruit",...}
     },
     ["Buy Gear"] = {
         ["Enable"] = true,
@@ -58,8 +58,12 @@ getgenv().Config = {
         ["Delay Send Profile Player"] = 180
     },
 }
-local Players = game:GetService("Players")local LocalPlayer = Players.LocalPlayerlocal ReplicatedStorage = game:GetService("ReplicatedStorage")
--- Thay đổi dòng nạp thư viện sang liên kết chính thức của Sirius Rayfieldlocal Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+-- Thay đổi dòng nạp thư viện sang liên kết chính thức của Sirius Rayfield
+local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 local Window = Rayfield:CreateWindow({
    Name = "hoanghaizhub | Grow a Garden 2",
    LoadingTitle = "Đang tải bảng điều khiển...",
@@ -80,7 +84,9 @@ local function doAutoBuySeed()
             buyRemote:FireServer(seed, 1)
             task.wait(0.1)
         end
-    endend
+    end
+end
+
 local function doAutoPlant()
     if not getgenv().Config["Plant Seed"]["Enable"] then return end
     local plantRemote = ReplicatedStorage:FindFirstChild("PlantSeed") or (ReplicatedStorage:FindFirstChild("Remotes") and ReplicatedStorage.Remotes:FindFirstChild("PlantSeed"))
@@ -96,7 +102,9 @@ local function doAutoPlant()
                 end
             end
         end
-    endend
+    end
+end
+
 local MainTab = Window:CreateTab("Cài Đặt Chính", 4483362458)
 
 MainTab:CreateToggle({
@@ -245,7 +253,8 @@ WebhookTab:CreateInput({
    RemoveTextmarking = false,
    Callback = function(Value) getgenv().Config["Webhook"]["UrlWebhook"] = Value end
 })
-local ActionTab = Window:CreateTab("Kích Hoạt", 4483362458)local isRunning = false
+local ActionTab = Window:CreateTab("Kích Hoạt", 4483362458)
+local isRunning = false
 
 ActionTab:CreateButton({
    Name = "BẮT ĐẦU CHẠY SCRIPT (START)",
@@ -254,10 +263,10 @@ ActionTab:CreateButton({
          Rayfield:Notify({Name = "Thông báo", Content = "Hệ thống Auto Farm đang hoạt động ngầm!", Duration = 3})
          return 
       end
-})      
+
       isRunning = true
       Rayfield:Notify({Name = "Thành công", Content = "Đã kích hoạt vòng lặp Auto Farm!", Duration = 3})
-task.spawn(function()
+      task.spawn(function()
          while isRunning do
             pcall(function()
                 doAutoBuySeed()

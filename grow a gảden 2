@@ -1,7 +1,7 @@
 getgenv().Config = {
     ["Setting"] = {
         ["White Screen"] = false
-n    },
+    },
     ["Main"] = {
         ["Max Plant"] = 200,
         ["Expand Garden"] = true,
@@ -262,7 +262,6 @@ MainTab:CreateToggle({
       end
    end,
 })
-
 local FarmTab = Window:CreateTab("Trồng & Mua Hạt", 4483362458)
 
 FarmTab:CreateToggle({
@@ -276,7 +275,6 @@ FarmTab:CreateToggle({
    CurrentValue = getgenv().Config["Buy Seed"]["Enable"],
    Callback = function(Value) getgenv().Config["Buy Seed"]["Enable"] = Value end,
 })
-
 local UpgradeTab = Window:CreateTab("Trang Bị & Pet", 4483362458)
 
 UpgradeTab:CreateToggle({
@@ -302,7 +300,6 @@ UpgradeTab:CreateToggle({
    CurrentValue = getgenv().Config["Buy Pet"]["Enable"],
    Callback = function(Value) getgenv().Config["Buy Pet"]["Enable"] = Value end,
 })
-
 local FavoriteTab = Window:CreateTab("Ưu Tiên", 4483362458)
 
 FavoriteTab:CreateToggle({
@@ -320,7 +317,6 @@ FavoriteTab:CreateSlider({
    ValueName = "kg",
    Callback = function(Value) getgenv().Config["Favorite"]["Minium Weight"] = Value end,
 })
-
 local MailboxTab = Window:CreateTab("Hộp Thư", 4483362458)
 
 MailboxTab:CreateToggle({
@@ -335,7 +331,6 @@ MailboxTab:CreateInput({
    RemoveTextmarking = false,
    Callback = function(Value) getgenv().Config["Mailbox"]["Username"] = Value end,
 })
-
 local WebhookTab = Window:CreateTab("Webhook Discord", 4483362458)
 
 WebhookTab:CreateToggle({
@@ -350,7 +345,6 @@ WebhookTab:CreateInput({
    RemoveTextmarking = false,
    Callback = function(Value) getgenv().Config["Webhook"]["UrlWebhook"] = Value end
 })
-
 local ActionTab = Window:CreateTab("Kích Hoạt", 4483362458)
 
 ActionTab:CreateButton({

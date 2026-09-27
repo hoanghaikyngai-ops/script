@@ -1,5 +1,5 @@
 -- ====================================================
--- HOANGHAI HUB - FISCH (CẬP NHẬT: HỒI SINH TRƯỚC -> TELEPORT ĐẢO -> KHÓA 17S)
+-- HOANGHAI HUB - FISCH (TÍCH HỢP LÀM LAG ĐÁNH LỪA BOT CHỐNG BAN)
 -- ====================================================
 local Players = game:GetService("Players")
 local VirtualInputManager = game:GetService("VirtualInputManager")
@@ -13,7 +13,7 @@ local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
 -- 🛡️ Chống trùng lặp UI
-local SECURE_ID = "HOANGHAI_FISCH_PUBLIC_V16"
+local SECURE_ID = "HOANGHAI_FISCH_PUBLIC_V20"
 if getgenv()[SECURE_ID] then
     pcall(function() PlayerGui.HHubUI:Destroy() end)
 end
@@ -289,41 +289,44 @@ local isRunning = true
 local isOneHoldOn = true
 local FishingSpotCFrame = nil
 
-local function smoothFlyTo(targetPos)
+-- HÀM LÀM LAG GIẢ LẬP ĐÁNH LỪA BOT CHỐNG BAN
+local function simulateLagSpike(duration)
+    local startTick = tick()
+    while tick() - startTick < duration do
+        -- Tạo tải giả lập ngắt nhịp để bot/anti-cheat ghi nhận rớt mạng / lag kết nối
+        local heavyTask = 0
+        for i = 1, 150000 do
+            heavyTask = heavyTask + i
+        end
+        RunService.Heartbeat:Wait()
+    end
+end
+
+local function teleportAndRespawnAtIsland(targetPos)
     pcall(function()
         local char = LocalPlayer.Character
         local hum = char and char:FindFirstChildOfClass("Humanoid")
         if not hum then return end
 
-        -- 1. TỰ ĐỘNG HỒI SINH TRƯỚC (RESET NHÂN VẬT)
-        Status.Text = "ĐANG HỒI SINH / TẠO LẠI NHÂN VẬT..."
+        Status.Text = "ĐANG GIẢ LẬP MẠNG LAG & LÀM CHẾT NHÂN VẬT..."
+        simulateLagSpike(0.4) -- Làm lag nhẹ trước khi chết để qua mặt bot
         hum.Health = 0 
         
-        -- Chờ nhân vật hồi sinh xong
         LocalPlayer.CharacterAdded:Wait()
-        task.wait(1.2)
+        task.wait(1.0)
         
-        -- 2. TẠO LẠI / DỜI NHÂN VẬT MỚI ĐẾN ĐẢO ĐƯỢC CHỌN
         local newChar = LocalPlayer.Character
         local newRoot = newChar:WaitForChild("HumanoidRootPart")
         local newHum = newChar:WaitForChild("Humanoid")
 
-        Status.Text = "ĐANG BAY ĐẾN ĐẢO..."
-        newRoot.Anchored = true
-        
-        local dist = (newRoot.Position - targetPos).Magnitude
-        local speed = 60
-        local tweenInfo = TweenInfo.new(dist / speed, Enum.EasingStyle.Linear)
-        local tween = TweenService:Create(newRoot, tweenInfo, {CFrame = CFrame.new(targetPos + Vector3.new(0, 5, 0))})
-        
-        tween:Play()
-        tween.Completed:Wait()
-        
+        Status.Text = "ĐÃ HỒI SINH - ĐẶT TẠI ĐẢO & BẬT CHỐNG BAN..."
         newRoot.CFrame = CFrame.new(targetPos + Vector3.new(0, 3, 0))
-        task.wait(0.3)
+        
+        -- Kích hoạt làm lag giả lập siêu ngắn ngay thời điểm xuất hiện để che giấu tọa độ tele
+        simulateLagSpike(0.6)
+        task.wait(0.2)
 
-        -- 3. KHÓA CỨNG ĐỨNG YÊN ĐÚNG 17 GIÂY ĐỂ CHỐNG BỊ KÉO VỀ
-        Status.Text = "ĐÃ ĐẾN ĐẢO - KHÓA CỨNG ĐỨNG YÊN 17 GIÂY..."
+        Status.Text = "ĐANG KHÓA CỨNG ĐỨNG YÊN 17 GIÂY..."
         newRoot.Anchored = true
         newHum.WalkSpeed = 0
         
@@ -335,7 +338,7 @@ local function smoothFlyTo(targetPos)
 
         newRoot.Anchored = false
         newHum.WalkSpeed = 16
-        Status.Text = "ĐÃ SẴN SÀNG CÀY CUỐC TRỞ LẠI!"
+        Status.Text = "ĐÃ AN TOÀN - SẴN SÀNG CÀY CUỐC!"
     end)
 end
 
@@ -346,12 +349,12 @@ for i, island in ipairs(Islands) do
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     btn.Font = Enum.Font.GothamSemibold
     btn.TextSize = 11
-    btn.Text = "Bay tới: " .. island.Name
+    btn.Text = "Đến đảo: " .. island.Name
     btn.LayoutOrder = i
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
     
     btn.MouseButton1Click:Connect(function()
-        task.spawn(function() smoothFlyTo(island.Pos) end)
+        task.spawn(function() teleportAndRespawnAtIsland(island.Pos) end)
     end)
 end
 
@@ -371,7 +374,7 @@ Info.TextXAlignment = Enum.TextXAlignment.Left
 Info.TextYAlignment = Enum.TextYAlignment.Top
 
 local SECURE_TITLE = "HOANGHAI HUB - FISCH"
-local SECURE_INFO = "Tác giả: HOANGHAI\n- Tự động hồi sinh trước, tạo lại nhân vật tại đảo và khóa cứng 17s."
+local SECURE_INFO = "Tác giả: HOANGHAI\n- Tích hợp tính năng làm lag giả lập đánh lừa bot chống ban."
 Info.Text = SECURE_INFO
 
 task.spawn(function()
@@ -521,20 +524,36 @@ local function triggerOneHit()
     end)
 end
 
+-- HÀM CLICK NÚT TRÊN GIAO DIỆN
 local function clickBtn(keys)
     local inset = GuiService:GetGuiInset()
     for _, obj in pairs(PlayerGui:GetDescendants()) do
         if obj and obj.Parent and not obj:IsDescendantOf(ScreenGui) then
-            if (obj:IsA("TextButton") or obj:IsA("TextLabel")) and obj.Visible then
-                local txt = string.lower(obj.Text or "")
+            if obj.Visible then
+                local isInteractable = obj:IsA("TextButton") or obj:IsA("ImageButton")
+                local name = string.lower(obj.Name or "")
+                local text = ""
+                if obj:IsA("TextButton") or obj:IsA("TextLabel") then
+                    text = string.lower(obj.Text or "")
+                end
+
                 for _, kw in ipairs(keys) do
-                    if txt:find(kw) then
-                        local pos, sz = obj.AbsolutePosition, obj.AbsoluteSize
-                        local cx, cy = pos.X + sz.X/2 + inset.X, pos.Y + sz.Y/2 + inset.Y
-                        VirtualInputManager:SendMouseButtonEvent(cx, cy, 0, true, game, 1)
-                        task.wait(0.05)
-                        VirtualInputManager:SendMouseButtonEvent(cx, cy, 0, false, game, 1)
-                        return true
+                    if text:find(kw) or name:find(kw) then
+                        local targetObj = obj
+                        if not isInteractable then
+                            local ancestor = obj:FindFirstAncestorWhichIsA("TextButton") or obj:FindFirstAncestorWhichIsA("ImageButton")
+                            if ancestor then targetObj = ancestor end
+                        end
+
+                        if targetObj.AbsoluteSize.X > 0 and targetObj.AbsoluteSize.Y > 0 then
+                            local pos, sz = targetObj.AbsolutePosition, targetObj.AbsoluteSize
+                            local cx, cy = pos.X + sz.X/2 + inset.X, pos.Y + sz.Y/2 + inset.Y
+                            
+                            VirtualInputManager:SendMouseButtonEvent(cx, cy, 0, true, game, 1)
+                            task.wait(0.05)
+                            VirtualInputManager:SendMouseButtonEvent(cx, cy, 0, false, game, 1)
+                            return true
+                        end
                     end
                 end
             end
@@ -632,7 +651,7 @@ task.spawn(function()
                     root.Anchored = true; hum.WalkSpeed = 0
 
                     repeat
-                        Status.Text = "ĐANG BÁN CÁ (CÒN " .. tostring(fCount) .. " CON)..."
+                        Status.Text = "ĐANG MỞ HỘI THOẠI & BÁN CÁ (CÒN " .. tostring(fCount) .. " CON)..."
                         
                         if targetPrompt then
                             pcall(function() fireproximityprompt(targetPrompt) end)
@@ -641,32 +660,35 @@ task.spawn(function()
                         VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
                         task.wait(0.1)
                         VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
-                        task.wait(0.6)
+                        task.wait(0.5)
 
-                        clickBtn({"bán tất cả", "sell all", "bán", "sell", "confirm", "đồng ý"})
+                        clickBtn({"bán tất cả", "sell all", "bán", "sell", "confirm", "đồng ý", "all", "tất cả"})
                         task.wait(1.5)
                         fCount = getFish()
                     until fCount == 0 or not isRunning
 
-                    Status.Text = "ĐANG ĐÓNG HỘI THOẠI (NHẤP NÚT TẠM BIỆT)..."
+                    Status.Text = "CÁ ĐÃ HẾT (0) - ĐANG ẤN TẠM BIỆT..."
                     local cStart = tick()
-                    while tick() - cStart < 3 do 
+                    while tick() - cStart < 4 do 
                         local closed = clickBtn({"tạm biệt", "bye", "thoát", "close", "x", "leave", "exit"})
                         if closed then
                             break
                         end
-                        task.wait(0.4) 
+                        task.wait(0.3) 
                     end
+                    task.wait(0.5)
 
-                    Status.Text = "TÚI ĐÃ TRỐNG - ĐANG VỀ BÃI CÂU..."
-                    root.Anchored = true; hum.WalkSpeed = 16
+                    Status.Text = "TÚI ĐÃ TRỐNG - NHẢ KHÓA VỀ BÃI CÂU..."
+                    root.Anchored = false
+                    hum.WalkSpeed = 16
                     
                     local dBack = (root.Position - FishingSpotCFrame.Position).Magnitude
                     if dBack > 3 then
+                        root.Anchored = true
                         local backTween = TweenService:Create(root, TweenInfo.new(dBack / 60, Enum.EasingStyle.Linear), {CFrame = FishingSpotCFrame})
                         backTween:Play(); backTween.Completed:Wait()
+                        root.Anchored = false
                     end
-                    root.Anchored = false
                 end
 
                 if not isRunning then return end

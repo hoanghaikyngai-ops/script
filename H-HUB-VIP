@@ -311,7 +311,7 @@ Info.TextXAlignment = Enum.TextXAlignment.Left
 Info.TextYAlignment = Enum.TextYAlignment.Top
 
 local SECURE_TITLE = "HOANGHAI HUB - FISCH"
-local SECURE_INFO = "Tác giả: HOANGHAI\n- Đã tối ưu tốc độ bấm ZXCV & Tích hợp nút H xoay tròn.\n- Chúc các bạn chơi game vui vẻ!"
+local SECURE_INFO = "Tác giả: HOANGHAI\n- Đã tối ưu tốc độ bấm ZXCV (1 click/giây).\n- Chúc các bạn chơi game vui vẻ!"
 Info.Text = SECURE_INFO
 
 task.spawn(function()
@@ -393,7 +393,7 @@ end
 
 local CUSTOM_MERCHANT_POS = Vector3.new(1264.13, 27.42, -353.30) 
 
--- HÀM MINI GAME TÌM MŨI TÊN & KÝ TỰ TAY CẦM SIÊU TỐC (0.0005S)
+-- HÀM MINI GAME TÌM MŨI TÊN & KÝ TỰ TAY CẦM SIÊU TỐC
 local function solveMiniGameFast()
     local inset = GuiService:GetGuiInset()
     for _, obj in pairs(PlayerGui:GetDescendants()) do
@@ -572,18 +572,18 @@ task.spawn(function()
                 if isHoldingRod then
                     local vp = Workspace.CurrentCamera.ViewportSize
                     
-                    -- Đã điều chỉnh tốc độ spam ZXCV vừa vặn để game nhận diện phím tốt hơn
+                    -- ĐÃ GIẢM TỐC ĐỘ BẤM ZXCV XUỐNG CÒN KHOẢNG 1 LẦN TRÊN 1 GIÂY
                     local spam = true
                     task.spawn(function()
                         while spam and isRunning do
                             for _, k in ipairs({Enum.KeyCode.Z, Enum.KeyCode.X, Enum.KeyCode.C, Enum.KeyCode.V}) do
                                 if not spam or not isRunning then break end
                                 VirtualInputManager:SendKeyEvent(true, k, false, game)
-                                task.wait(0.08) -- Tăng độ trễ ấn phím xuống để game kịp nhận
+                                task.wait(0.1)
                                 VirtualInputManager:SendKeyEvent(false, k, false, game)
-                                task.wait(0.04)
+                                task.wait(0.15) -- Tăng độ trễ để tổng thời gian hoàn thành 1 chu kỳ phím chậm lại (khoảng 1 click/giây)
                             end
-                            task.wait(0.12)
+                            task.wait(0.4) 
                         end
                     end)
 

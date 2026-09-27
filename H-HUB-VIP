@@ -26,7 +26,7 @@ local ScreenGui = Instance.new("ScreenGui", PlayerGui)
 ScreenGui.Name = "HHubUI"
 ScreenGui.ResetOnSpawn = false
 
--- NÚT TOGGLE (ĐÓNG/MỞ TAB): HÌNH TRÒN RỖNG RUỘT, VIỀN ĐỎ + VIỀN BO ÁNH VÀNG KIM LẤP LÁNH
+-- NÚT TOGGLE (ĐÓNG/MỞ TAB): HÌNH TRÒN RỖNG RUỘT, VIỀN ĐỎ + VIỀN VÀNG KIM LẤP LÁNH
 local ToggleBtn = Instance.new("TextButton", ScreenGui)
 ToggleBtn.Size = UDim2.new(0, 52, 0, 52)
 ToggleBtn.Position = UDim2.new(0, 20, 0, 120)
@@ -42,7 +42,7 @@ local ToggleStrokeRed = Instance.new("UIStroke", ToggleBtn)
 ToggleStrokeRed.Color = Color3.fromRGB(255, 0, 0)
 ToggleStrokeRed.Thickness = 3
 
--- Lớp viền bo ánh vàng kim lấp lánh (hiệu ứng xoay tròn chuyển màu)
+-- Lớp viền vàng kim lấp lánh chạy quanh viền nút Toggle
 local ToggleStrokeGold = Instance.new("UIStroke", ToggleBtn)
 ToggleStrokeGold.Thickness = 1.5
 local GoldStrokeGrad = Instance.new("UIGradient", ToggleStrokeGold)
@@ -269,7 +269,7 @@ local TpList = Instance.new("UIListLayout", TpScroll)
 TpList.SortOrder = Enum.SortOrder.LayoutOrder
 TpList.Padding = UDim.new(0, 6)
 
-Islands = {
+local Islands = {
     {Name = "Starter Island", Pos = Vector3.new(-41.90, 11.09, 303.40)},
     {Name = "Jungle Island", Pos = Vector3.new(-1166.36, 10.68, -66.31)},
     {Name = "Desert Island", Pos = Vector3.new(-51.02, 10.13, -954.41)},
@@ -279,31 +279,35 @@ Islands = {
 
 local isRunning = true
 local isOneHoldOn = true
-local FishingSpotCAnswer = nil
 local FishingSpotCFrame = nil
 
 local function flyToPos(targetPos)
     pcall(function()
-        -- Kích hoạt ngắt mạng lập tức ngay thời điểm bấm lệnh để đón đầu quá trình chết
-        Status.Text = "ĐANG NGẮT MẠNG & TỰ SÁT ĐỂ BAY..."
-        setLag(99999)
+        Status.Text = "ĐANG TỰ SÁT & CHUẨN BỊ BAY..."
+        setLag(99999) -- Ngắt mạng trước khi chết để vô hiệu hóa game gửi vị trí cũ
         
         local char = LocalPlayer.Character
-        local hum = char and char:FindFirstChildOfClass("Humanoid")
-        if hum then
-            hum.Health = 0
+        if char then
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            if hum then
+                hum.Health = 0
+            else
+                char:BreakJoints() -- Dự phòng nếu không tìm thấy Humanoid thì bẻ khớp để chết ngay lập tức
+            end
         end
 
-        -- Lắng nghe sự kiện hồi sinh để dịch chuyển tức thì
         local connection
         connection = LocalPlayer.CharacterAdded:Connect(function(newChar)
             if connection then connection:Disconnect() end
             task.spawn(function()
                 local newRoot = newChar:WaitForChild("HumanoidRootPart", 5)
                 if newRoot then
-                    Status.Text = "ĐANG BAY TỐC ĐỘ CAO TỚI ĐẢO..."
+                    Status.Text = "ĐÃ HỒI SINH - ĐANG BAY TỚI ĐẢO..."
                     newRoot.Anchored = true 
                     local targetCFrame = CFrame.new(targetPos + Vector3.new(0, 5, 0))
+                    
+                    -- Ép nhân vật mới xuất hiện và dịch chuyển luôn tại tọa độ mục tiêu trên đảo
+                    newRoot.CFrame = targetCFrame
                     
                     local dist = (newRoot.Position - targetPos).Magnitude
                     local speed = 700
@@ -360,7 +364,7 @@ Info.TextXAlignment = Enum.TextXAlignment.Left
 Info.TextYAlignment = Enum.TextYAlignment.Top
 
 local SECURE_TITLE = "HOANGHAI HUB - FISCH"
-local SECURE_INFO = "Tác giả: HOANGHAI\n- Teleport: Ngắt mạng và bay ngay lập tức.\n- Nút Toggle: Viền đỏ + Viền bo vàng kim lấp lánh."
+local SECURE_INFO = "Tác giả: HOANGHAI\n- Teleport: Chết xong tạo nhân vật mới bay thẳng tới đảo.\n- Nút Toggle: Viền đỏ + Viền vàng kim lấp lánh."
 Info.Text = SECURE_INFO
 
 task.spawn(function()

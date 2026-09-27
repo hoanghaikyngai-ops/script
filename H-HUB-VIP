@@ -26,35 +26,64 @@ local ScreenGui = Instance.new("ScreenGui", PlayerGui)
 ScreenGui.Name = "HHubUI"
 ScreenGui.ResetOnSpawn = false
 
--- NÚT TOGGLE (ĐÓNG/MỞ TAB) HÌNH TRÒN CÓ CHỮ H & HOẠT ẢNH QUAY TRÒN
+-- NÚT TOGGLE (ĐÓNG/MỞ TAB) HÌNH TRÒN CÓ CHỮ H ĐỨNG YÊN & VIỀN SHARINGAN QUAY TRÒN
 local ToggleBtn = Instance.new("TextButton", ScreenGui)
-ToggleBtn.Size = UDim2.new(0, 48, 0, 48)
+ToggleBtn.Size = UDim2.new(0, 52, 0, 52)
 ToggleBtn.Position = UDim2.new(0, 20, 0, 120)
-ToggleBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-ToggleBtn.Text = "H"
-ToggleBtn.TextColor3 = Color3.fromRGB(255, 215, 0)
-ToggleBtn.Font = Enum.Font.GothamBold
-ToggleBtn.TextSize = 22
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+ToggleBtn.Text = ""
 ToggleBtn.AutoButtonColor = false
 ToggleBtn.Active = true
 ToggleBtn.Draggable = true
 Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1, 0)
 
 local ToggleStroke = Instance.new("UIStroke", ToggleBtn)
-ToggleStroke.Color = Color3.fromRGB(255, 215, 0)
-ToggleStroke.Thickness = 2
+ToggleStroke.Color = Color3.fromRGB(255, 0, 0)
+ToggleStroke.Thickness = 3
 
-local ToggleGrad = Instance.new("UIGradient", ToggleBtn)
-ToggleGrad.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 215, 0)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 255)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 215, 0))
-})
+-- Chữ H đứng yên nằm chính giữa nút Toggle
+local StaticTextH = Instance.new("TextLabel", ToggleBtn)
+StaticTextH.Size = UDim2.new(1, 0, 1, 0)
+StaticTextH.BackgroundTransparency = 1
+StaticTextH.Text = "H"
+StaticTextH.TextColor3 = Color3.fromRGB(255, 215, 0)
+StaticTextH.Font = Enum.Font.GothamBold
+StaticTextH.TextSize = 22
+StaticTextH.TextXAlignment = Enum.TextXAlignment.Center
+StaticTextH.TextYAlignment = Enum.TextYAlignment.Center
 
--- Hoạt ảnh quay tròn cho nút Toggle
+-- Hiệu ứng Sharingan: Vòng các biểu tượng xoay quanh viền
+local SharinganHolder = Instance.new("Frame", ToggleBtn)
+SharinganHolder.Size = UDim2.new(1, 0, 1, 0)
+SharinganHolder.BackgroundTransparency = 1
+SharinganHolder.AnchorPoint = Vector2.new(0.5, 0.5)
+SharinganHolder.Position = UDim2.new(0.5, 0, 0.5, 0)
+
+local activeSymbols = {}
+for i = 1, 4 do
+    local lbl = Instance.new("TextLabel", SharinganHolder)
+    lbl.Size = UDim2.new(0, 16, 0, 16)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = (i % 2 ~= 0) and "🌀" or "👁️"
+    lbl.TextSize = 12
+    lbl.AnchorPoint = Vector2.new(0.5, 0.5)
+    table.insert(activeSymbols, lbl)
+end
+
+-- Vòng lặp xoay viền Sharingan kiểm tra độ mượt / lag thực tế
 task.spawn(function()
+    local angle = 0
     while true do
-        ToggleGrad.Rotation = (ToggleGrad.Rotation + 6) % 360
+        angle = (angle + 4) % 360
+        local rad = math.rad(angle)
+        local radius = 24
+        
+        for i, lbl in ipairs(activeSymbols) do
+            local offsetAngle = rad + math.rad((i - 1) * 90)
+            local x = math.cos(offsetAngle) * radius
+            local y = math.sin(offsetAngle) * radius
+            lbl.Position = UDim2.new(0.5, x, 0.5, y)
+        end
         task.wait(0.03)
     end
 end)
@@ -71,14 +100,12 @@ local Stroke = Instance.new("UIStroke", Main)
 Stroke.Color = Color3.fromRGB(255, 215, 0)
 Stroke.Thickness = 2
 
--- Sự kiện click vào nút Toggle để Ẩn / Hiện Bảng Menu
 local uiVisible = true
 ToggleBtn.MouseButton1Click:Connect(function()
     uiVisible = not uiVisible
     Main.Visible = uiVisible
 end)
 
--- Kéo thả UI chính
 local dragging, dragStart, startPos
 Main.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -243,13 +270,30 @@ local Islands = {
 
 local isRunning = true
 local isOneHoldOn = true
-local LockCFrame = nil
+local FishingSpotCFrame = nil
 
 local function flyToPos(targetPos)
     pcall(function()
         local char = LocalPlayer.Character
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
         local root = char and char:FindFirstChild("HumanoidRootPart")
-        if root then
+        
+        if hum and root then
+            -- 1. Cho nhân vật chết trước khi tele
+            Status.Text = "ĐANG TỰ SÁT (CHO NHÂN VẬT CHẾT)..."
+            hum.Health = 0
+            
+            -- Đợi nhân vật hồi sinh lại
+            LocalPlayer.CharacterAdded:Wait()
+            task.wait(1.0) -- Đợi load character ổn định
+            
+            char = LocalPlayer.Character
+            hum = char:FindFirstChildOfClass("Humanoid")
+            root = char:FindFirstChild("HumanoidRootPart")
+            
+            if not root or not hum then return end
+
+            -- 2. Tiến hành ngắt mạng & bay tới đảo sau khi hồi sinh
             Status.Text = "ĐANG NGẮT MẠNG (ĐỢI 9 GIÂY)..."
             setLag(99999)
             task.wait(9.0)
@@ -265,7 +309,7 @@ local function flyToPos(targetPos)
             local tw = TweenService:Create(root, TweenInfo.new(timeToTween, Enum.EasingStyle.Linear), {CFrame = targetCFrame})
             tw:Play()
             
-            if isRunning then LockCFrame = targetCFrame end
+            if isRunning then FishingSpotCFrame = targetCFrame end
             
             tw.Completed:Wait()
             task.wait(1.0)
@@ -311,7 +355,7 @@ Info.TextXAlignment = Enum.TextXAlignment.Left
 Info.TextYAlignment = Enum.TextYAlignment.Top
 
 local SECURE_TITLE = "HOANGHAI HUB - FISCH"
-local SECURE_INFO = "Tác giả: HOANGHAI\n- Đã tối ưu tốc độ bấm ZXCV (1 click/giây).\n- Chúc các bạn chơi game vui vẻ!"
+local SECURE_INFO = "Tác giả: HOANGHAI\n- Teleport sẽ tự động chết trước rồi mới bay.\n- Viền Sharingan báo lag hoạt động tốt."
 Info.Text = SECURE_INFO
 
 task.spawn(function()
@@ -344,12 +388,12 @@ Toggle.MouseButton1Click:Connect(function()
         TweenService:Create(Toggle, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(0, 170, 0)}):Play()
         Status.Text = "DA BAT!"
         local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-        if root then LockCFrame = root.CFrame end
+        if root then FishingSpotCFrame = root.CFrame end
     else
         Toggle.Text = "AUTO: TAT"
         TweenService:Create(Toggle, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(170, 0, 0)}):Play()
         Status.Text = "DA TAT!"
-        LockCFrame = nil
+        FishingSpotCFrame = nil
         pcall(function()
             local c = LocalPlayer.Character
             if c then
@@ -477,11 +521,13 @@ task.spawn(function()
                 local root = char and char:FindFirstChild("HumanoidRootPart")
                 local hum = char and char:FindFirstChildOfClass("Humanoid")
                 if not root or not hum then return end
-                if not LockCFrame then LockCFrame = root.CFrame end
+                
+                if not FishingSpotCFrame then 
+                    FishingSpotCFrame = root.CFrame 
+                end
 
                 local fCount = getFish()
                 if fCount >= 50 then
-                    LockCFrame = root.CFrame
                     Status.Text = "TÚI ĐẦY -> BAY TỚI FISH MERCHANT..."
                     local vp = Workspace.CurrentCamera.ViewportSize
                     VirtualInputManager:SendMouseButtonEvent(vp.X/2, vp.Y/2, 0, true, game, 1)
@@ -504,7 +550,7 @@ task.spawn(function()
                     root.Anchored = true; hum.WalkSpeed = 0
 
                     repeat
-                        Status.Text = "ĐANG BÁN CÁ..."
+                        Status.Text = "ĐANG BÁN CÁ (CÒN " .. tostring(fCount) .. " CON)..."
                         VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
                         task.wait(0.1)
                         VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
@@ -524,14 +570,14 @@ task.spawn(function()
                     local cStart = tick()
                     while tick() - cStart < 3 do clickBtn({"tạm biệt", "bye", "thoát", "close", "x"}); task.wait(0.5) end
 
-                    Status.Text = "VỀ BÃI CÂU..."
+                    Status.Text = "TÚI ĐÃ VỀ 0 - ĐANG VỀ BÃI CÂU..."
                     root.Anchored = true; hum.WalkSpeed = 16
                     
-                    local dBack = (root.Position - LockCFrame.Position).Magnitude
+                    local dBack = (root.Position - FishingSpotCFrame.Position).Magnitude
                     if dBack > 3 then
                         setLag(99999)
                         task.wait(9.0)
-                        local twB = TweenService:Create(root, TweenInfo.new(dBack/700, Enum.EasingStyle.Linear), {CFrame = LockCFrame})
+                        local twB = TweenService:Create(root, TweenInfo.new(dBack/700, Enum.EasingStyle.Linear), {CFrame = FishingSpotCFrame})
                         twB:Play(); twB.Completed:Wait()
                         setLag(0)
                     end
@@ -540,23 +586,21 @@ task.spawn(function()
 
                 if not isRunning then return end
 
-                local distToLock = (root.Position - LockCFrame.Position).Magnitude
+                local distToLock = (root.Position - FishingSpotCFrame.Position).Magnitude
                 if distToLock > 3 then
                     setLag(99999)
                     task.wait(9.0)
                     root.Anchored = true
-                    local twB = TweenService:Create(root, TweenInfo.new(distToLock/700, Enum.EasingStyle.Linear), {CFrame = LockCFrame})
+                    local twB = TweenService:Create(root, TweenInfo.new(distToLock/700, Enum.EasingStyle.Linear), {CFrame = FishingSpotCFrame})
                     twB:Play(); twB.Completed:Wait()
                     root.Anchored = false
                     setLag(0)
                 end
                 
-                -- Khóa chân tại bãi câu (Anchored = true)
-                root.CFrame = LockCFrame
+                root.CFrame = FishingSpotCFrame
                 root.Anchored = true
                 hum.WalkSpeed = 0
 
-                -- CHỈ BẤM PHÍM 1 NẾU CHƯA CẦM CẦN TRÊN TAY
                 local activeTool = char and char:FindFirstChildOfClass("Tool")
                 local isHoldingRod = activeTool and (string.lower(activeTool.Name):find("rod") or string.lower(activeTool.Name):find("cần"))
 
@@ -572,7 +616,6 @@ task.spawn(function()
                 if isHoldingRod then
                     local vp = Workspace.CurrentCamera.ViewportSize
                     
-                    -- ĐÃ GIẢM TỐC ĐỘ BẤM ZXCV XUỐNG CÒN KHOẢNG 1 LẦN TRÊN 1 GIÂY
                     local spam = true
                     task.spawn(function()
                         while spam and isRunning do
@@ -581,7 +624,7 @@ task.spawn(function()
                                 VirtualInputManager:SendKeyEvent(true, k, false, game)
                                 task.wait(0.1)
                                 VirtualInputManager:SendKeyEvent(false, k, false, game)
-                                task.wait(0.15) -- Tăng độ trễ để tổng thời gian hoàn thành 1 chu kỳ phím chậm lại (khoảng 1 click/giây)
+                                task.wait(0.15)
                             end
                             task.wait(0.4) 
                         end
@@ -615,7 +658,6 @@ task.spawn(function()
                     VirtualInputManager:SendMouseButtonEvent(vp.X/2, vp.Y/2, 0, false, game, 1)
                     task.wait(0.5)
 
-                    -- Đã bắt được cá (+1), tạm dừng chính xác 5 giây
                     Status.Text = "ĐÃ CỘNG +1 CÁ - TẠM DỪNG 5 GIÂY..."
                     task.wait(5.0)
                 else

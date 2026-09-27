@@ -152,7 +152,7 @@ Info.TextXAlignment = Enum.TextXAlignment.Left
 Info.TextYAlignment = Enum.TextYAlignment.Top
 
 local SECURE_TITLE = "HOANGHAI HUB - AUTO FISH"
-local SECURE_INFO = "Tac gia: HOANGHAI\n- Dung toa do Fish Merchant.\n- Tu dong x xa skill & an E.\n- Gioi han bay trong dao."
+local SECURE_INFO = "Tac gia: HOANGHAI\n- Click trực tiếp vào mũi tên.\n- Tu dong x xa skill & an E.\n- Gioi han bay trong dao."
 Info.Text = SECURE_INFO
 
 task.spawn(function()
@@ -218,27 +218,37 @@ local function getFish()
     return count
 end
 
--- TỌA ĐỘ CỐ ĐỊNH CỦA FISH MERCHANT LẤY TỪ ẢNH CỦA BẠN
 local CUSTOM_MERCHANT_POS = Vector3.new(1264.13, 27.42, -353.30) 
 
 local function getNPC(pos)
     return CUSTOM_MERCHANT_POS
 end
 
+-- TÍNH NĂNG MỚI: TỰ ĐỘNG CLICK TRỰC TIẾP VÀO MŨI TÊN KHI XUẤT HIỆN
 local function solveArrows()
+    local inset = GuiService:GetGuiInset()
     for _, obj in pairs(PlayerGui:GetDescendants()) do
         if obj.Visible then
-            local n, t = string.lower(obj.Name), obj:IsA("TextLabel") and string.lower(obj.Text) or ""
+            local n = string.lower(obj.Name)
+            local t = (obj:IsA("TextLabel") or obj:IsA("TextButton")) and string.lower(obj.Text) or ""
             local img = (obj:IsA("ImageLabel") or obj:IsA("ImageButton")) and string.lower(obj.Image) or ""
-            local key = nil
-            if n:find("up") or t:find("w") or t:find("▲") or t:find("↑") or img:find("up") then key = Enum.KeyCode.W
-            elseif n:find("left") or t:find("a") or t:find("◄") or t:find("←") or img:find("left") then key = Enum.KeyCode.A
-            elseif n:find("right") or t:find("d") or t:find("►") or t:find("→") or img:find("right") then key = Enum.KeyCode.D end
-            if key then
-                VirtualInputManager:SendKeyEvent(true, key, false, game)
-                task.wait(0.01)
-                VirtualInputManager:SendKeyEvent(false, key, false, game)
-                return true
+            
+            -- Kiểm tra xem đối tượng có phải là mũi tên/điều hướng không
+            if n:find("arrow") or n:find("direction") or n:find("pointer") or 
+               t:find("▲") or t:find("▼") or t:find("◄") or t:find("►") or t:find("↑") or t:find("↓") or t:find("←") or t:find("→") or 
+               img:find("arrow") or img:find("pointer") then
+                
+                local pos, sz = obj.AbsolutePosition, obj.AbsoluteSize
+                if sz.X > 0 and sz.Y > 0 then
+                    local cx = pos.X + sz.X / 2 + inset.X
+                    local cy = pos.Y + sz.Y / 2 + inset.Y
+                    
+                    -- Click chuột trái cực nhanh vào vị trí mũi tên
+                    VirtualInputManager:SendMouseButtonEvent(cx, cy, 0, true, game, 1)
+                    task.wait(0.01)
+                    VirtualInputManager:SendMouseButtonEvent(cx, cy, 0, false, game, 1)
+                    return true
+                end
             end
         end
     end
@@ -368,9 +378,13 @@ task.spawn(function()
                     VirtualInputManager:SendMouseButtonEvent(vp.X/2, vp.Y/2 - 80, 0, false, game, 1)
                     spam = false
 
-                    Status.Text = "AUTO MUI TEN..."
+                    -- Vòng lặp luôn luôn quét và click liên tục vào mũi tên cho đến hết minigame câu cá
+                    Status.Text = "DANG QUET CLICK MŨI TÊN..."
                     local aStart = tick()
-                    while tick() - aStart < 15 and isRunning do solveArrows(); task.wait(0.01) end
+                    while tick() - aStart < 15 and isRunning do 
+                        solveArrows()
+                        task.wait(0.01) -- Quét siêu tốc liên tục để bắt trọn mũi tên xuất hiện 1 giây
+                    end
 
                     VirtualInputManager:SendMouseButtonEvent(vp.X/2, vp.Y/2, 0, true, game, 1)
                     task.wait(0.05)

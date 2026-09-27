@@ -1,5 +1,5 @@
 -- ====================================================
--- HOANGHAI HUB - FISCH (TÍCH HỢP LÀM LAG ĐÁNH LỪA BOT CHỐNG BAN)
+-- HOANGHAI HUB - FISCH (BUFF MẠNH TÍNH NĂNG LÀM LAG CHỐNG BAN)
 -- ====================================================
 local Players = game:GetService("Players")
 local VirtualInputManager = game:GetService("VirtualInputManager")
@@ -13,7 +13,7 @@ local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
 -- 🛡️ Chống trùng lặp UI
-local SECURE_ID = "HOANGHAI_FISCH_PUBLIC_V20"
+local SECURE_ID = "HOANGHAI_FISCH_PUBLIC_V22"
 if getgenv()[SECURE_ID] then
     pcall(function() PlayerGui.HHubUI:Destroy() end)
 end
@@ -289,14 +289,14 @@ local isRunning = true
 local isOneHoldOn = true
 local FishingSpotCFrame = nil
 
--- HÀM LÀM LAG GIẢ LẬP ĐÁNH LỪA BOT CHỐNG BAN
-local function simulateLagSpike(duration)
+-- HÀM LÀM LAG GIẢ LẬP ĐÁNH LỪA BOT CHỐNG BAN (ĐÃ ĐƯỢC BUFF NẶNG)
+local function simulateHeavyLagSpike(duration)
     local startTick = tick()
     while tick() - startTick < duration do
-        -- Tạo tải giả lập ngắt nhịp để bot/anti-cheat ghi nhận rớt mạng / lag kết nối
+        -- Tăng vòng lặp CPU nặng để tạo hiện tượng nghẽn mạng giả lập rõ rệt hơn
         local heavyTask = 0
-        for i = 1, 150000 do
-            heavyTask = heavyTask + i
+        for i = 1, 450000 do
+            heavyTask = heavyTask + math.sqrt(i)
         end
         RunService.Heartbeat:Wait()
     end
@@ -308,37 +308,46 @@ local function teleportAndRespawnAtIsland(targetPos)
         local hum = char and char:FindFirstChildOfClass("Humanoid")
         if not hum then return end
 
-        Status.Text = "ĐANG GIẢ LẬP MẠNG LAG & LÀM CHẾT NHÂN VẬT..."
-        simulateLagSpike(0.4) -- Làm lag nhẹ trước khi chết để qua mặt bot
+        Status.Text = "ĐANG TẠO NHIỄU MẠNG & BÙNG NỔ LAG GIẢ LẬP..."
+        simulateHeavyLagSpike(0.7) -- Buộc nghẽn trước khi chết
         hum.Health = 0 
         
         LocalPlayer.CharacterAdded:Wait()
-        task.wait(1.0)
+        task.wait(1.2)
         
         local newChar = LocalPlayer.Character
         local newRoot = newChar:WaitForChild("HumanoidRootPart")
         local newHum = newChar:WaitForChild("Humanoid")
 
-        Status.Text = "ĐÃ HỒI SINH - ĐẶT TẠI ĐẢO & BẬT CHỐNG BAN..."
+        Status.Text = "HỒI SINH - ÉP TỌA ĐỘ VÀ KÈM LAG CHỐNG QUÉT..."
         newRoot.CFrame = CFrame.new(targetPos + Vector3.new(0, 3, 0))
         
-        -- Kích hoạt làm lag giả lập siêu ngắn ngay thời điểm xuất hiện để che giấu tọa độ tele
-        simulateLagSpike(0.6)
-        task.wait(0.2)
+        -- Kích hoạt đợt làm lag siêu nặng thứ 2 ngay tại tọa độ mới để che giấu hoàn toàn hành vi Teleport
+        simulateHeavyLagSpike(1.0)
+        task.wait(0.3)
 
-        Status.Text = "ĐANG KHÓA CỨNG ĐỨNG YÊN 17 GIÂY..."
-        newRoot.Anchored = true
-        newHum.WalkSpeed = 0
+        Status.Text = "ĐANG KHÓA CỨNG ĐỨNG YÊN LIÊN TỤC 17 GIÂY..."
+        
+        local lockStart = tick()
+        while tick() - lockStart < 17 do
+            pcall(function()
+                if newRoot and newHum then
+                    newRoot.Anchored = true
+                    newHum.WalkSpeed = 0
+                    newHum.JumpPower = 0
+                end
+            end)
+            task.wait(0.15)
+        end
+
+        newRoot.Anchored = false
+        newHum.WalkSpeed = 16
+        newHum.JumpPower = 50
+        Status.Text = "ĐÃ AN TOÀN - SẴN SÀNG CÀY CUỐC!"
         
         if isRunning then 
             FishingSpotCFrame = newRoot.CFrame 
         end
-
-        task.wait(17) -- Đếm ngược 17 giây
-
-        newRoot.Anchored = false
-        newHum.WalkSpeed = 16
-        Status.Text = "ĐÃ AN TOÀN - SẴN SÀNG CÀY CUỐC!"
     end)
 end
 
@@ -374,7 +383,7 @@ Info.TextXAlignment = Enum.TextXAlignment.Left
 Info.TextYAlignment = Enum.TextYAlignment.Top
 
 local SECURE_TITLE = "HOANGHAI HUB - FISCH"
-local SECURE_INFO = "Tác giả: HOANGHAI\n- Tích hợp tính năng làm lag giả lập đánh lừa bot chống ban."
+local SECURE_INFO = "Tác giả: HOANGHAI\n- Đã buff mạnh cơ chế làm lag giả lập chống quét bot."
 Info.Text = SECURE_INFO
 
 task.spawn(function()
@@ -696,7 +705,7 @@ task.spawn(function()
                 local distToLock = (root.Position - FishingSpotCFrame.Position).Magnitude
                 if distToLock > 3 then
                     root.Anchored = true
-                    local lockTween = TweenService:Create(root, TweenInfo.new(distToLock / 60, Enum.EasingStyle.Linear), {CFrame = FishingSpotCFrame})
+                    local lockTween = TweenService:Create(root, TweenInfo.new(dBack / 60, Enum.EasingStyle.Linear), {CFrame = FishingSpotCFrame})
                     lockTween:Play(); lockTween.Completed:Wait()
                     root.Anchored = false
                 end

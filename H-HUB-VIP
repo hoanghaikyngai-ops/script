@@ -26,7 +26,7 @@ local ScreenGui = Instance.new("ScreenGui", PlayerGui)
 ScreenGui.Name = "HHubUI"
 ScreenGui.ResetOnSpawn = false
 
--- NÚT TOGGLE (ĐÓNG/MỞ TAB) HÌNH TRÒN CÓ CHỮ H ĐỨNG YÊN & VIỀN SHARINGAN QUAY TRÒN
+-- NÚT TOGGLE (ĐÓNG/MỞ TAB) HÌNH TRÒN CÓ CHỮ H ĐỨNG YÊN & VIỀN + TOMOE SHARINGAN QUAY TRÒN
 local ToggleBtn = Instance.new("TextButton", ScreenGui)
 ToggleBtn.Size = UDim2.new(0, 52, 0, 52)
 ToggleBtn.Position = UDim2.new(0, 20, 0, 120)
@@ -37,6 +37,7 @@ ToggleBtn.Active = true
 ToggleBtn.Draggable = true
 Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1, 0)
 
+-- Viền nút màu đỏ chuẩn Sharingan
 local ToggleStroke = Instance.new("UIStroke", ToggleBtn)
 ToggleStroke.Color = Color3.fromRGB(255, 0, 0)
 ToggleStroke.Thickness = 3
@@ -52,7 +53,7 @@ StaticTextH.TextSize = 22
 StaticTextH.TextXAlignment = Enum.TextXAlignment.Center
 StaticTextH.TextYAlignment = Enum.TextYAlignment.Center
 
--- Hiệu ứng Sharingan: Vòng các biểu tượng xoay quanh viền
+-- Hiệu ứng Sharingan: Vòng các Tomoe/Mắt đỏ xoay quanh viền
 local SharinganHolder = Instance.new("Frame", ToggleBtn)
 SharinganHolder.Size = UDim2.new(1, 0, 1, 0)
 SharinganHolder.BackgroundTransparency = 1
@@ -60,12 +61,16 @@ SharinganHolder.AnchorPoint = Vector2.new(0.5, 0.5)
 SharinganHolder.Position = UDim2.new(0.5, 0, 0.5, 0)
 
 local activeSymbols = {}
+-- Sử dụng ký hiệu Tomoe (o) kết hợp Mắt Sharingan (👁️) để tạo hoạt ảnh chuẩn chủ đề
+local tomoeSymbols = {"👁️", "࿊", "👁️", "࿊"} 
 for i = 1, 4 do
     local lbl = Instance.new("TextLabel", SharinganHolder)
     lbl.Size = UDim2.new(0, 16, 0, 16)
     lbl.BackgroundTransparency = 1
-    lbl.Text = (i % 2 ~= 0) and "🌀" or "👁️"
-    lbl.TextSize = 12
+    lbl.Text = tomoeSymbols[i]
+    lbl.TextColor3 = Color3.fromRGB(255, 0, 0) -- Màu đỏ Sharingan
+    lbl.Font = Enum.Font.GothamBold
+    lbl.TextSize = 13
     lbl.AnchorPoint = Vector2.new(0.5, 0.5)
     table.insert(activeSymbols, lbl)
 end
@@ -279,13 +284,15 @@ local function flyToPos(targetPos)
         local root = char and char:FindFirstChild("HumanoidRootPart")
         
         if hum and root then
-            -- 1. Cho nhân vật chết trước khi tele
+            -- 1. Tự sát (cho nhân vật chết)
             Status.Text = "ĐANG TỰ SÁT (CHO NHÂN VẬT CHẾT)..."
             hum.Health = 0
             
             -- Đợi nhân vật hồi sinh lại
             LocalPlayer.CharacterAdded:Wait()
-            task.wait(1.0) -- Đợi load character ổn định
+            
+            -- Đợi đúng 1 giây sau khi hồi sinh rồi tiến hành bay
+            task.wait(1.0)
             
             char = LocalPlayer.Character
             hum = char:FindFirstChildOfClass("Humanoid")
@@ -293,7 +300,7 @@ local function flyToPos(targetPos)
             
             if not root or not hum then return end
 
-            -- 2. Tiến hành ngắt mạng & bay tới đảo sau khi hồi sinh
+            -- 2. Tiến hành ngắt mạng & bay tới đảo
             Status.Text = "ĐANG NGẮT MẠNG (ĐỢI 9 GIÂY)..."
             setLag(99999)
             task.wait(9.0)
@@ -355,7 +362,7 @@ Info.TextXAlignment = Enum.TextXAlignment.Left
 Info.TextYAlignment = Enum.TextYAlignment.Top
 
 local SECURE_TITLE = "HOANGHAI HUB - FISCH"
-local SECURE_INFO = "Tác giả: HOANGHAI\n- Teleport sẽ tự động chết trước rồi mới bay.\n- Viền Sharingan báo lag hoạt động tốt."
+local SECURE_INFO = "Tác giả: HOANGHAI\n- Viền đỏ rực & Tomoe Sharingan xoay báo lag.\n- Chết xong đợi 1s là tele ngay."
 Info.Text = SECURE_INFO
 
 task.spawn(function()

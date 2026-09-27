@@ -56,7 +56,7 @@ local Title = Instance.new("TextLabel", TopBar)
 Title.Size = UDim2.new(1, -15, 1, 0)
 Title.Position = UDim2.new(0, 10, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "HOANGHAI HUB - FISCH (PRO MAX)"
+Title.Text = "HOANGHAI HUB - FISCH (FIX BUG)"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 13
@@ -150,6 +150,18 @@ KillFishToggle.TextSize = 11
 KillFishToggle.Text = "LAG KILL CÁ (MAX): BẬT"
 Instance.new("UICorner", KillFishToggle).CornerRadius = UDim.new(0, 6)
 
+-- HÀM ÉP LAG CHUYÊN SÂU HỖ TRỢ MỌI EXECUTOR
+local function setLag(amount)
+    pcall(function()
+        settings():GetService("NetworkSettings"):SetIncomingReplicationLag(amount)
+    end)
+    if sethiddenproperty then
+        pcall(function()
+            sethiddenproperty(settings():GetService("NetworkSettings"), "IncomingReplicationLag", amount)
+        end)
+    end
+end
+
 -- TRANG 2: DỊCH CHUYỂN
 local P2 = Instance.new("Frame", PageC)
 P2.Size = UDim2.new(1, 0, 1, 0)
@@ -174,16 +186,17 @@ local Islands = {
     {Name = "Volcano Island", Pos = Vector3.new(1807.50, 9.17, 1073.44)}
 }
 
+-- CẬP NHẬT HÀM DỊCH CHUYỂN (SỬ DỤNG PIVOTTO ĐỂ CHUẨN XÁC)
 local function tpToPos(targetPos)
     pcall(function()
         local char = LocalPlayer.Character
-        local root = char and char:FindFirstChild("HumanoidRootPart")
-        if root then
-            settings():GetService("NetworkSettings"):SetIncomingReplicationLag(99999)
+        if char then
+            -- Bắt buộc tắt lag trước khi dịch chuyển để server nhận tín hiệu
+            setLag(0)
             task.wait(0.1)
-            root.CFrame = CFrame.new(targetPos + Vector3.new(0, 5, 0))
+            -- Sử dụng PivotTo thay vì CFrame để chống lỗi kẹt map
+            char:PivotTo(CFrame.new(targetPos + Vector3.new(0, 5, 0)))
             task.wait(0.5)
-            settings():GetService("NetworkSettings"):SetIncomingReplicationLag(0)
         end
     end)
 end
@@ -220,7 +233,7 @@ Info.TextXAlignment = Enum.TextXAlignment.Left
 Info.TextYAlignment = Enum.TextYAlignment.Top
 
 local SECURE_TITLE = "HOANGHAI HUB - FISCH"
-local SECURE_INFO = "Tac gia: HOANGHAI\n- Cập nhật click mũi tên siêu tốc.\n- Tối đa Lag mạng (99999).\n- Treo liên tục tới khi đầy túi."
+local SECURE_INFO = "Tac gia: HOANGHAI\n- Cập nhật Fix lỗi TP và Lag mạng.\n- Hỗ trợ ẩn tính năng sethiddenproperty.\n- Treo liên tục tới khi đầy túi."
 Info.Text = SECURE_INFO
 
 task.spawn(function()
@@ -308,11 +321,9 @@ local function getNPC(pos)
     return CUSTOM_MERCHANT_POS
 end
 
--- TỐI ƯU CLICK MŨI TÊN NHANH VÀ CHUẨN HƠN (BỎ DELAY THỪA)
 local function solveArrows()
     local inset = GuiService:GetGuiInset()
     for _, obj in pairs(PlayerGui:GetDescendants()) do
-        -- Lọc nhanh các thành phần UI để tối ưu tốc độ quét
         if obj.Visible and (obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("ImageLabel") or obj:IsA("ImageButton")) then
             local n = string.lower(obj.Name)
             local t = (obj:IsA("TextLabel") or obj:IsA("TextButton")) and string.lower(obj.Text) or ""
@@ -327,7 +338,6 @@ local function solveArrows()
                     local cx = pos.X + sz.X / 2 + inset.X
                     local cy = pos.Y + sz.Y / 2 + inset.Y
                     
-                    -- Click lập tức không xài task.wait() giữa chừng
                     VirtualInputManager:SendMouseButtonEvent(cx, cy, 0, true, game, 1)
                     VirtualInputManager:SendMouseButtonEvent(cx, cy, 0, false, game, 1)
                     return true
@@ -391,7 +401,8 @@ task.spawn(function()
                     Status.Text = "BAY TOI FISH MERCHANT..."
                     hum.WalkSpeed = 16; root.Anchored = false
                     
-                    settings():GetService("NetworkSettings"):SetIncomingReplicationLag(99999)
+                    -- Hủy lag để di chuyển
+                    setLag(0)
                     
                     local dist = (root.Position - tPos).Magnitude
                     if dist > 3 then
@@ -399,9 +410,8 @@ task.spawn(function()
                         tw:Play(); tw.Completed:Wait()
                     end
 
-                    root.CFrame = CFrame.new(tPos)
+                    char:PivotTo(CFrame.new(tPos))
                     root.Anchored = true; hum.WalkSpeed = 0
-                    settings():GetService("NetworkSettings"):SetIncomingReplicationLag(0)
 
                     repeat
                         Status.Text = "DANG BAN CA..."
@@ -427,18 +437,16 @@ task.spawn(function()
                     Status.Text = "VE BAI CAU..."
                     root.Anchored = false; hum.WalkSpeed = 16
                     
-                    settings():GetService("NetworkSettings"):SetIncomingReplicationLag(99999)
                     local dBack = (root.Position - LockCFrame.Position).Magnitude
                     if dBack > 3 then
                         local twB = TweenService:Create(root, TweenInfo.new(dBack/45, Enum.EasingStyle.Linear), {CFrame = LockCFrame})
                         twB:Play(); twB.Completed:Wait()
                     end
-                    settings():GetService("NetworkSettings"):SetIncomingReplicationLag(0)
                 end
 
                 if not isRunning then return end
 
-                root.CFrame = LockCFrame
+                char:PivotTo(LockCFrame)
                 root.Anchored = false; hum.WalkSpeed = 0
 
                 local bp = LocalPlayer:FindFirstChild("Backpack")
@@ -469,20 +477,18 @@ task.spawn(function()
                     spam = false
 
                     Status.Text = "DANG QUET CLICK MŨI TÊN & KILL CÁ..."
-                    -- Đẩy mức lag lên cực đỉnh (99999) để ngắt hoàn toàn dữ liệu server (giúp kill cá tức thì)
                     if isKillFishLagOn then
-                        settings():GetService("NetworkSettings"):SetIncomingReplicationLag(99999)
+                        setLag(99999)
                     end
 
-                    -- Vòng lặp minigame kéo dài liên tục tới khi túi đầy (50 cá) hoặc đã treo quá 60s/1 mẻ lưới
                     local aStart = tick()
                     while tick() - aStart < 60 and isRunning and getFish() < 50 do 
                         solveArrows()
-                        task.wait() -- task.wait() trống giúp quét mượt bằng FPS khung hình, siêu lẹ
+                        task.wait()
                     end
 
                     if isKillFishLagOn then
-                        settings():GetService("NetworkSettings"):SetIncomingReplicationLag(0)
+                        setLag(0)
                     end
 
                     VirtualInputManager:SendMouseButtonEvent(vp.X/2, vp.Y/2, 0, true, game, 1)

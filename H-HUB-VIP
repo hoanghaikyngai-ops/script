@@ -193,7 +193,11 @@ local function flyToPos(targetPos)
         local char = LocalPlayer.Character
         local root = char and char:FindFirstChild("HumanoidRootPart")
         if root then
+            -- 1. Lag trước 3 giây trước khi thực hiện dịch chuyển
+            Status.Text = "CHUẨN BỊ (LAG TRƯỚC 3S)..."
             setLag(99999)
+            task.wait(3.0)
+
             root.Anchored = true 
             local targetCFrame = CFrame.new(targetPos + Vector3.new(0, 5, 0))
             
@@ -208,6 +212,10 @@ local function flyToPos(targetPos)
             
             Status.Text = "DANG BAY TOC DO CAO..."
             tw.Completed:Wait()
+            
+            -- 2. Giữ lag kéo dài 13 giây sau khi bay xong
+            Status.Text = "ĐANG GIỮ LAG (13 GIÂY)..."
+            task.wait(13.0)
             
             root.Anchored = false
             setLag(0)
@@ -369,7 +377,6 @@ local function triggerOneHit()
                 if name:find("progress") or name:find("bar") or name:find("fish") or name:find("health") or name:find("container") or name:find("minigame") then
                     for _, child in pairs(gui:GetDescendants()) do
                         if child:IsA("Frame") and (child.Size.X.Scale > 0 or child.Size.X.Offset > 0) then
-                            -- Ép chiều dài thanh máu/tiến trình về 0 (hoặc đầy cực đại để trigger kết thúc)
                             child.Size = UDim2.new(0, 0, child.Size.Y.Scale, child.Size.Y.Offset)
                         end
                     end
@@ -530,7 +537,7 @@ task.spawn(function()
                     while tick() - aStart < 60 and isRunning and getFish() < 50 do 
                         solveArrows()
                         if isOneHitOn then
-                            triggerOneHit() -- Ép máu cá về 0 liên tục cho đến khi dính cá
+                            triggerOneHit()
                         end
                         task.wait()
                     end

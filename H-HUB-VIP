@@ -1,5 +1,5 @@
 -- ====================================================
--- HOANGHAI HUB - FISCH (BUFF MẠNH TÍNH NĂNG LÀM LAG CHỐNG BAN)
+-- HOANGHAI HUB - FISCH (FIX: KHÓA TẠI NPC NẾU CHƯA BÁN HẾT CÁ)
 -- ====================================================
 local Players = game:GetService("Players")
 local VirtualInputManager = game:GetService("VirtualInputManager")
@@ -13,7 +13,7 @@ local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
 -- 🛡️ Chống trùng lặp UI
-local SECURE_ID = "HOANGHAI_FISCH_PUBLIC_V22"
+local SECURE_ID = "HOANGHAI_FISCH_PUBLIC_V24"
 if getgenv()[SECURE_ID] then
     pcall(function() PlayerGui.HHubUI:Destroy() end)
 end
@@ -289,11 +289,9 @@ local isRunning = true
 local isOneHoldOn = true
 local FishingSpotCFrame = nil
 
--- HÀM LÀM LAG GIẢ LẬP ĐÁNH LỪA BOT CHỐNG BAN (ĐÃ ĐƯỢC BUFF NẶNG)
 local function simulateHeavyLagSpike(duration)
     local startTick = tick()
     while tick() - startTick < duration do
-        -- Tăng vòng lặp CPU nặng để tạo hiện tượng nghẽn mạng giả lập rõ rệt hơn
         local heavyTask = 0
         for i = 1, 450000 do
             heavyTask = heavyTask + math.sqrt(i)
@@ -309,7 +307,7 @@ local function teleportAndRespawnAtIsland(targetPos)
         if not hum then return end
 
         Status.Text = "ĐANG TẠO NHIỄU MẠNG & BÙNG NỔ LAG GIẢ LẬP..."
-        simulateHeavyLagSpike(0.7) -- Buộc nghẽn trước khi chết
+        simulateHeavyLagSpike(0.7)
         hum.Health = 0 
         
         LocalPlayer.CharacterAdded:Wait()
@@ -322,7 +320,6 @@ local function teleportAndRespawnAtIsland(targetPos)
         Status.Text = "HỒI SINH - ÉP TỌA ĐỘ VÀ KÈM LAG CHỐNG QUÉT..."
         newRoot.CFrame = CFrame.new(targetPos + Vector3.new(0, 3, 0))
         
-        -- Kích hoạt đợt làm lag siêu nặng thứ 2 ngay tại tọa độ mới để che giấu hoàn toàn hành vi Teleport
         simulateHeavyLagSpike(1.0)
         task.wait(0.3)
 
@@ -383,7 +380,7 @@ Info.TextXAlignment = Enum.TextXAlignment.Left
 Info.TextYAlignment = Enum.TextYAlignment.Top
 
 local SECURE_TITLE = "HOANGHAI HUB - FISCH"
-local SECURE_INFO = "Tác giả: HOANGHAI\n- Đã buff mạnh cơ chế làm lag giả lập chống quét bot."
+local SECURE_INFO = "Tác giả: HOANGHAI\n- Khóa tại NPC nếu cá chưa về 0."
 Info.Text = SECURE_INFO
 
 task.spawn(function()
@@ -530,45 +527,59 @@ local function triggerOneHit()
                 end
             end
         end
-    end)
-end
+    end
+end)
 
 -- HÀM CLICK NÚT TRÊN GIAO DIỆN
 local function clickBtn(keys)
     local inset = GuiService:GetGuiInset()
+    local clickedAny = false
+    
     for _, obj in pairs(PlayerGui:GetDescendants()) do
         if obj and obj.Parent and not obj:IsDescendantOf(ScreenGui) then
-            if obj.Visible then
-                local isInteractable = obj:IsA("TextButton") or obj:IsA("ImageButton")
-                local name = string.lower(obj.Name or "")
-                local text = ""
-                if obj:IsA("TextButton") or obj:IsA("TextLabel") then
-                    text = string.lower(obj.Text or "")
-                end
+            pcall(function()
+                if obj.Visible then
+                    local isInteractable = obj:IsA("TextButton") or obj:IsA("ImageButton")
+                    local name = string.lower(obj.Name or "")
+                    local text = ""
+                    if obj:IsA("TextButton") or obj:IsA("TextLabel") then
+                        text = string.lower(obj.Text or "")
+                    end
 
-                for _, kw in ipairs(keys) do
-                    if text:find(kw) or name:find(kw) then
-                        local targetObj = obj
-                        if not isInteractable then
-                            local ancestor = obj:FindFirstAncestorWhichIsA("TextButton") or obj:FindFirstAncestorWhichIsA("ImageButton")
-                            if ancestor then targetObj = ancestor end
-                        end
+                    for _, kw in ipairs(keys) do
+                        if text:find(kw) or name:find(kw) then
+                            local targetObj = obj
+                            if not isInteractable then
+                                local ancestor = obj:FindFirstAncestorWhichIsA("TextButton") or obj:FindFirstAncestorWhichIsA("ImageButton")
+                                if ancestor then targetObj = ancestor end
+                            end
 
-                        if targetObj.AbsoluteSize.X > 0 and targetObj.AbsoluteSize.Y > 0 then
-                            local pos, sz = targetObj.AbsolutePosition, targetObj.AbsoluteSize
-                            local cx, cy = pos.X + sz.X/2 + inset.X, pos.Y + sz.Y/2 + inset.Y
-                            
-                            VirtualInputManager:SendMouseButtonEvent(cx, cy, 0, true, game, 1)
-                            task.wait(0.05)
-                            VirtualInputManager:SendMouseButtonEvent(cx, cy, 0, false, game, 1)
-                            return true
+                            if targetObj.AbsoluteSize.X > 0 and targetObj.AbsoluteSize.Y > 0 then
+                                local pos, sz = targetObj.AbsolutePosition, targetObj.AbsoluteSize
+                                local cx, cy = pos.X + sz.X/2 + inset.X, pos.Y + sz.Y/2 + inset.Y
+                                
+                                VirtualInputManager:SendMouseButtonEvent(cx, cy, 0, true, game, 1)
+                                task.wait(0.05)
+                                VirtualInputManager:SendMouseButtonEvent(cx, cy, 0, false, game, 1)
+                                
+                                if targetObj:IsA("TextButton") or targetObj:IsA("ImageButton") then
+                                    for _, conn in pairs(getconnections(targetObj.MouseButton1Click)) do
+                                        conn:Fire()
+                                    end
+                                    for _, conn in pairs(getconnections(targetObj.Activated)) do
+                                        conn:Fire()
+                                    end
+                                end
+                                
+                                clickedAny = true
+                            end
                         end
                     end
                 end
-            end
+            end)
         end
     end
-    return false
+    return clickedAny
 end
 
 -- VÒNG LẶP CÀY CUỐC ĐỘC LẬP
@@ -638,13 +649,11 @@ task.spawn(function()
                         for _, obj in pairs(Workspace:GetDescendants()) do
                             if obj:IsA("ProximityPrompt") then
                                 local parent = obj.Parent
-                                if parent and parent:IsA("BasePart") then
-                                    local d = (parent.Position - root.Position).Magnitude
-                                    if d < shortestDist then
-                                        shortestDist = d
-                                        targetPrompt = obj
-                                        targetPart = parent
-                                    end
+                                local d = (parent.Position - root.Position).Magnitude
+                                if d < shortestDist then
+                                    shortestDist = d
+                                    targetPrompt = obj
+                                    targetPart = parent
                                 end
                             end
                         end
@@ -657,10 +666,12 @@ task.spawn(function()
                         task.wait(0.2)
                     end
 
-                    root.Anchored = true; hum.WalkSpeed = 0
-
+                    -- BÁN CÁ CHO ĐẾN KHI SỐ CÁ VỀ 0 (NHÂN VẬT BỊ KHÓA CỨNG TẠI CHỖ NẾU CHƯA XONG)
                     repeat
-                        Status.Text = "ĐANG MỞ HỘI THOẠI & BÁN CÁ (CÒN " .. tostring(fCount) .. " CON)..."
+                        Status.Text = "ĐANG BÁN CÁ (CÒN " .. tostring(fCount) .. " CON) - ĐANG KHÓA TẠI NPC..."
+                        root.Anchored = true
+                        hum.WalkSpeed = 0
+                        hum.JumpPower = 0
                         
                         if targetPrompt then
                             pcall(function() fireproximityprompt(targetPrompt) end)
@@ -676,6 +687,7 @@ task.spawn(function()
                         fCount = getFish()
                     until fCount == 0 or not isRunning
 
+                    -- KHI SỐ CÁ ĐÃ VỀ 0: ẤN NÚT TẠM BIỆT ĐỂ ĐÓNG GIAO DIỆN
                     Status.Text = "CÁ ĐÃ HẾT (0) - ĐANG ẤN TẠM BIỆT..."
                     local cStart = tick()
                     while tick() - cStart < 4 do 
@@ -687,9 +699,11 @@ task.spawn(function()
                     end
                     task.wait(0.5)
 
+                    -- NHẢ KHÓA VÀ BAY VỀ TỌA ĐỘ BÃI CÂU ĐÃ LƯU
                     Status.Text = "TÚI ĐÃ TRỐNG - NHẢ KHÓA VỀ BÃI CÂU..."
                     root.Anchored = false
                     hum.WalkSpeed = 16
+                    hum.JumpPower = 50
                     
                     local dBack = (root.Position - FishingSpotCFrame.Position).Magnitude
                     if dBack > 3 then

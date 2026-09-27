@@ -1,5 +1,5 @@
 local Players = game:GetService("Players")
-local VirtualInputManager = Service or game:GetService("VirtualInputManager")
+local VirtualInputManager = game:GetService("VirtualInputManager")
 local TweenService = game:GetService("TweenService")
 local Workspace = game:GetService("Workspace")
 local GuiService = game:GetService("GuiService")
@@ -25,29 +25,19 @@ local Stroke = Instance.new("UIStroke", Main)
 Stroke.Color = Color3.fromRGB(255, 215, 0)
 Stroke.Thickness = 2
 
--- Xử lý kéo thả và sửa lỗi dính chuột
+-- Kéo thả UI
 local dragging, dragStart, startPos
-
 Main.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        dragStart = input.Position
-        startPos = Main.Position
-        
+        dragging = true; dragStart = input.Position; startPos = Main.Position
         input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
+            if input.UserInputState == Enum.UserInputState.End then dragging = false end
         end)
     end
 end)
-
 UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = false
-    end
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragging = false end
 end)
-
 UserInputService.InputChanged:Connect(function(input)
     if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
         local delta = input.Position - dragStart
@@ -161,10 +151,8 @@ Info.TextSize = 12
 Info.TextXAlignment = Enum.TextXAlignment.Left
 Info.TextYAlignment = Enum.TextYAlignment.Top
 
--- BẢO VỆ TÊN SCRIPT & TÁC GIẢ
 local SECURE_TITLE = "HOANGHAI HUB - AUTO FISH"
-local SECURE_INFO = "Tac gia: HOANGHAI\n- Tu dong nhan dien NPC.\n- Tu dong x xa skill & an E.\n- Gioi han bay trong dao.\n- Da sua loi tim NPC."
-
+local SECURE_INFO = "Tac gia: HOANGHAI\n- Da tối ưu tìm 'Fish Merchant'.\n- Tu dong x xa skill & an E.\n- Gioi han bay trong dao."
 Info.Text = SECURE_INFO
 
 task.spawn(function()
@@ -230,46 +218,32 @@ local function getFish()
     return count
 end
 
--- CẢI TIẾN HÀM TÌM NPC (HỖ TRỢ NHIỀU LOẠI GAME KHÁC NHAU)
+-- TÌM CHÍNH XÁC FISH MERCHANT
 local function getNPC(pos)
-    local target, dist = nil, 99999
+    local targetPos = nil
+    local shortestDist = math.huge
+
     for _, obj in pairs(Workspace:GetDescendants()) do
         local nameLower = string.lower(obj.Name)
-        local isTargetNPC = false
-        local pPos = nil
-
-        -- Nhận diện dựa trên tên NPC / Shop / Người bán cá hoặc ProximityPrompt
-        if nameLower:find("sell") or nameLower:find("merchant") or nameLower:find("shop") or nameLower:find("trader") or nameLower:find("fish") or nameLower:find("cá") or nameLower:find("buyer") then
-            isTargetNPC = true
-        end
-
-        if obj:IsA("ProximityPrompt") then
-            local txt = string.lower((obj.Parent and obj.Parent.Name or "") .. " " .. obj.ActionText .. " " .. obj.ObjectText)
-            if not (txt:find("rod") or txt:find("cần") or txt:find("bait") or txt:find("mồi") or txt:find("equip") or txt:find("sit")) then
-                if txt:find("sell") or txt:find("bán") or txt:find("merchant") or txt:find("shop") or txt:find("fish") or txt:find("cá") then
-                    isTargetNPC = true
-                    obj = obj.Parent
-                end
-            end
-        end
-
-        if isTargetNPC then
+        if nameLower:find("fish merchant") or nameLower:find("fishmerchant") then
+            local pPos = nil
             if obj:IsA("BasePart") then
                 pPos = obj.Position
             elseif obj:IsA("Model") then
                 pPos = (obj.PrimaryPart and obj.PrimaryPart.Position) or obj:GetPivot().Position
             end
-
+            
             if pPos then
                 local d = (pPos - pos).Magnitude
-                if d < dist then
-                    dist = d
-                    target = pPos
+                if d < shortestDist then
+                    shortestDist = d
+                    targetPos = pPos
                 end
             end
         end
     end
-    return target
+
+    return targetPos
 end
 
 local function solveArrows()
@@ -333,7 +307,7 @@ task.spawn(function()
                 local fCount = getFish()
                 if fCount >= 50 then
                     LockCFrame = root.CFrame
-                    Status.Text = "TUI DAY -> TIM NPC..."
+                    Status.Text = "TUI DAY -> TIM FISH MERCHANT..."
                     local vp = Workspace.CurrentCamera.ViewportSize
                     VirtualInputManager:SendMouseButtonEvent(vp.X/2, vp.Y/2, 0, true, game, 1)
                     task.wait(0.05)
@@ -342,12 +316,12 @@ task.spawn(function()
 
                     local tPos = getNPC(root.Position)
                     if not tPos then 
-                        Status.Text = "KHONG THAY NPC! THU LAI SAU..."
+                        Status.Text = "KHONG THAY FISH MERCHANT!"
                         task.wait(2)
                         return 
                     end
 
-                    Status.Text = "BAY TOI NPC..."
+                    Status.Text = "BAY TOI FISH MERCHANT..."
                     hum.WalkSpeed = 16; root.Anchored = false
                     local dist = (root.Position - tPos).Magnitude
                     if dist > 3 then

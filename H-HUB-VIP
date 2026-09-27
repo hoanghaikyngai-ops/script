@@ -58,7 +58,7 @@ task.spawn(function()
     end
 end)
 
--- Chữ H đứng yên màu vàng kim lấp lánh ở giữa nút Toggle (Đã tăng size lên 44)
+-- Chữ H đứng yên màu vàng kim lấp lánh ở giữa nút Toggle (Size to: 44)
 local StaticTextH = Instance.new("TextLabel", ToggleBtn)
 StaticTextH.Size = UDim2.new(1, 0, 1, 0)
 StaticTextH.BackgroundTransparency = 1
@@ -281,6 +281,7 @@ local isRunning = true
 local isOneHoldOn = true
 local FishingSpotCFrame = nil
 
+-- HÀM TELEPORT CÓ TÍCH HỢP KHÓA CỨNG 7 GIÂY CHỐNG BỊ KÉO NGƯỢC VỀ
 local function flyToPos(targetPos)
     pcall(function()
         Status.Text = "ĐANG TỰ SÁT & CHUẨN BỊ BAY..."
@@ -455,7 +456,7 @@ end
 
 local CUSTOM_MERCHANT_POS = Vector3.new(1264.13, 27.42, -353.30) 
 
--- HÀM MỚI: QUÉT TOÀN BỘ UI ĐỘNG / KHUNG MINIGAME ĐỂ CLICK VÉT MÁNG
+-- HÀM QUÉT TOÀN BỘ UI ĐỘNG / KHUNG MINIGAME ĐỂ CLICK VÉT MÁNG
 local function solveMiniGameFast()
     local inset = GuiService:GetGuiInset()
     local clicked = false
@@ -463,13 +464,11 @@ local function solveMiniGameFast()
     for _, obj in pairs(PlayerGui:GetDescendants()) do
         if obj.Visible then
             local n = string.lower(obj.Name)
-            -- Nhận diện các vùng chứa minigame hoặc các nút bấm tương tác động
             if n:find("minigame") or n:find("progress") or n:find("container") or n:find("bar") or n:find("prompt") or n:find("circle") or n:find("game") then
                 for _, child in pairs(obj:GetDescendants()) do
                     if child.Visible and (child:IsA("TextButton") or child:IsA("ImageButton") or child:IsA("Frame") or child:IsA("ImageLabel")) then
                         local sz = child.AbsoluteSize
                         local pos = child.AbsolutePosition
-                        -- Chỉ chọn các thành phần có kích thước nhỏ/vừa (tượng trưng cho các nút bấm/mũi tên/vòng tròn cần click)
                         if sz.X > 5 and sz.X < 250 and sz.Y > 5 and sz.Y < 250 then
                             local cx = pos.X + sz.X / 2 + inset.X
                             local cy = pos.Y + sz.Y / 2 + inset.Y

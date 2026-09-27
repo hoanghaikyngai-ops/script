@@ -1,5 +1,5 @@
 -- ====================================================
--- HOANGHAI HUB - FISCH (SỬA LỖI XOAY MẶT & ĐI SÁT NPC BÁN CÁ)
+-- HOANGHAI HUB - FISCH (CẬP NHẬT: HỒI SINH TRƯỚC -> TELEPORT ĐẢO -> KHÓA 17S)
 -- ====================================================
 local Players = game:GetService("Players")
 local VirtualInputManager = game:GetService("VirtualInputManager")
@@ -13,7 +13,7 @@ local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
 -- 🛡️ Chống trùng lặp UI
-local SECURE_ID = "HOANGHAI_FISCH_PUBLIC_V12"
+local SECURE_ID = "HOANGHAI_FISCH_PUBLIC_V16"
 if getgenv()[SECURE_ID] then
     pcall(function() PlayerGui.HHubUI:Destroy() end)
 end
@@ -197,6 +197,7 @@ PageC.Size = UDim2.new(1, -115, 1, -40)
 PageC.Position = UDim2.new(0, 112, 0, 38)
 PageC.BackgroundTransparency = 1
 
+-- ================= TAB 1: CÀY CUỐC =================
 local P1 = Instance.new("Frame", PageC)
 P1.Size = UDim2.new(1, 0, 1, 0)
 P1.BackgroundTransparency = 1
@@ -211,7 +212,6 @@ Status.TextWrapped = true
 Status.Text = "HOANGHAI HUB ĐÃ SẴN SÀNG!"
 Instance.new("UICorner", Status).CornerRadius = UDim.new(0, 6)
 
--- TEXT HIỂN THỊ SỐ CÁ
 local FishCountLabel = Instance.new("TextLabel", P1)
 FishCountLabel.Size = UDim2.new(1, 0, 0, 20)
 FishCountLabel.Position = UDim2.new(0, 0, 0, 32)
@@ -221,7 +221,6 @@ FishCountLabel.Font = Enum.Font.GothamSemibold
 FishCountLabel.TextSize = 11
 FishCountLabel.Text = "Số cá trong túi: 0 / 50"
 
--- NÚT CHỌN MỐC BÁN CÁ
 local maxFishCapacity = 50
 local capacityOptions = {10, 20, 30, 40, 50}
 local currentCapIndex = 5
@@ -262,7 +261,7 @@ KillFishToggle.TextSize = 11
 KillFishToggle.Text = "CÂU TỨC THÌ: BẬT"
 Instance.new("UICorner", KillFishToggle).CornerRadius = UDim.new(0, 6)
 
--- TRANG 2: DỊCH CHUYỂN
+-- ================= TAB 2: DỊCH CHUYỂN =================
 local P2 = Instance.new("Frame", PageC)
 P2.Size = UDim2.new(1, 0, 1, 0)
 P2.BackgroundTransparency = 1
@@ -293,25 +292,50 @@ local FishingSpotCFrame = nil
 local function smoothFlyTo(targetPos)
     pcall(function()
         local char = LocalPlayer.Character
-        local root = char and char:FindFirstChild("HumanoidRootPart")
-        if not root then return end
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        if not hum then return end
 
-        Status.Text = "ĐANG DI CHUYỂN ĐẾN ĐẢO..."
-        root.Anchored = true
+        -- 1. TỰ ĐỘNG HỒI SINH TRƯỚC (RESET NHÂN VẬT)
+        Status.Text = "ĐANG HỒI SINH / TẠO LẠI NHÂN VẬT..."
+        hum.Health = 0 
         
-        local dist = (root.Position - targetPos).Magnitude
+        -- Chờ nhân vật hồi sinh xong
+        LocalPlayer.CharacterAdded:Wait()
+        task.wait(1.2)
+        
+        -- 2. TẠO LẠI / DỜI NHÂN VẬT MỚI ĐẾN ĐẢO ĐƯỢC CHỌN
+        local newChar = LocalPlayer.Character
+        local newRoot = newChar:WaitForChild("HumanoidRootPart")
+        local newHum = newChar:WaitForChild("Humanoid")
+
+        Status.Text = "ĐANG BAY ĐẾN ĐẢO..."
+        newRoot.Anchored = true
+        
+        local dist = (newRoot.Position - targetPos).Magnitude
         local speed = 60
         local tweenInfo = TweenInfo.new(dist / speed, Enum.EasingStyle.Linear)
-        local tween = TweenService:Create(root, tweenInfo, {CFrame = CFrame.new(targetPos + Vector3.new(0, 5, 0))})
+        local tween = TweenService:Create(newRoot, tweenInfo, {CFrame = CFrame.new(targetPos + Vector3.new(0, 5, 0))})
         
         tween:Play()
         tween.Completed:Wait()
         
-        root.Anchored = false
+        newRoot.CFrame = CFrame.new(targetPos + Vector3.new(0, 3, 0))
+        task.wait(0.3)
+
+        -- 3. KHÓA CỨNG ĐỨNG YÊN ĐÚNG 17 GIÂY ĐỂ CHỐNG BỊ KÉO VỀ
+        Status.Text = "ĐÃ ĐẾN ĐẢO - KHÓA CỨNG ĐỨNG YÊN 17 GIÂY..."
+        newRoot.Anchored = true
+        newHum.WalkSpeed = 0
+        
         if isRunning then 
-            FishingSpotCFrame = root.CFrame 
+            FishingSpotCFrame = newRoot.CFrame 
         end
-        Status.Text = "ĐÃ ĐẾN ĐẢO THÀNH CÔNG!"
+
+        task.wait(17) -- Đếm ngược 17 giây
+
+        newRoot.Anchored = false
+        newHum.WalkSpeed = 16
+        Status.Text = "ĐÃ SẴN SÀNG CÀY CUỐC TRỞ LẠI!"
     end)
 end
 
@@ -331,7 +355,7 @@ for i, island in ipairs(Islands) do
     end)
 end
 
--- TRANG 3: THÔNG TIN
+-- ================= TAB 3: THÔNG TIN =================
 local P3 = Instance.new("Frame", PageC)
 P3.Size = UDim2.new(1, 0, 1, 0)
 P3.BackgroundTransparency = 1
@@ -347,7 +371,7 @@ Info.TextXAlignment = Enum.TextXAlignment.Left
 Info.TextYAlignment = Enum.TextYAlignment.Top
 
 local SECURE_TITLE = "HOANGHAI HUB - FISCH"
-local SECURE_INFO = "Tác giả: HOANGHAI\n- Đã sửa lỗi đi sát và quay mặt chuẩn xác vào NPC bán cá."
+local SECURE_INFO = "Tác giả: HOANGHAI\n- Tự động hồi sinh trước, tạo lại nhân vật tại đảo và khóa cứng 17s."
 Info.Text = SECURE_INFO
 
 task.spawn(function()
@@ -362,15 +386,23 @@ end)
 
 Tab1.MouseButton1Click:Connect(function()
     P1.Visible = true; P2.Visible = false; P3.Visible = false
-    Tab1.TextColor3 = Color3.fromRGB(255, 215, 0); Tab2.TextColor3 = Color3.fromRGB(200, 200, 200); Tab3.TextColor3 = Color3.fromRGB(200, 200, 200)
+    Tab1.TextColor3 = Color3.fromRGB(255, 215, 0)
+    Tab2.TextColor3 = Color3.fromRGB(200, 200, 200)
+    Tab3.TextColor3 = Color3.fromRGB(200, 200, 200)
 end)
+
 Tab2.MouseButton1Click:Connect(function()
     P1.Visible = false; P2.Visible = true; P3.Visible = false
-    Tab1.TextColor3 = Color3.fromRGB(200, 200, 200); Tab2.TextColor3 = Color3.fromRGB(255, 215, 0); Tab3.TextColor3 = Color3.fromRGB(200, 200, 200)
+    Tab1.TextColor3 = Color3.fromRGB(200, 200, 200)
+    Tab2.TextColor3 = Color3.fromRGB(255, 215, 0)
+    Tab3.TextColor3 = Color3.fromRGB(200, 200, 200)
 end)
+
 Tab3.MouseButton1Click:Connect(function()
     P1.Visible = false; P2.Visible = false; P3.Visible = true
-    Tab1.TextColor3 = Color3.fromRGB(200, 200, 200); Tab2.TextColor3 = Color3.fromRGB(200, 200, 200); Tab3.TextColor3 = Color3.fromRGB(255, 215, 0)
+    Tab1.TextColor3 = Color3.fromRGB(200, 200, 200)
+    Tab2.TextColor3 = Color3.fromRGB(200, 200, 200)
+    Tab3.TextColor3 = Color3.fromRGB(255, 215, 0)
 end)
 Tab1.TextColor3 = Color3.fromRGB(255, 215, 0)
 
@@ -511,6 +543,7 @@ local function clickBtn(keys)
     return false
 end
 
+-- VÒNG LẶP CÀY CUỐC ĐỘC LẬP
 task.spawn(function()
     while ScreenGui.Parent do
         task.wait(0.4)
@@ -534,9 +567,8 @@ task.spawn(function()
 
                 local fCount = getFish()
                 if fCount >= maxFishCapacity then
-                    Status.Text = "TÚI ĐÃ ĐẠT MỐC -> CLICK TẮT ẢNH CÁ & BAY ĐẾN NPC..."
+                    Status.Text = "TÚI ĐÃ ĐẠT MỐC -> BÁN CÁ..."
                     
-                    -- 1. CLICK 1 LẦN VÀO GIỮA MÀN HÌNH ĐỂ TẮT BẢNG ẢNH CÁ
                     local vp = Workspace.CurrentCamera.ViewportSize
                     VirtualInputManager:SendMouseButtonEvent(vp.X/2, vp.Y/2, 0, true, game, 1)
                     task.wait(0.05)
@@ -545,7 +577,6 @@ task.spawn(function()
 
                     hum.WalkSpeed = 16; root.Anchored = true
                     
-                    -- 2. BAY MƯỢT ĐẾN GẦN NPC BÁN CÁ
                     local dist = (root.Position - CUSTOM_MERCHANT_POS).Magnitude
                     local merchantTween = TweenService:Create(root, TweenInfo.new(dist / 60, Enum.EasingStyle.Linear), {CFrame = CFrame.new(CUSTOM_MERCHANT_POS + Vector3.new(0, 3, 0))})
                     merchantTween:Play(); merchantTween.Completed:Wait()
@@ -553,7 +584,6 @@ task.spawn(function()
                     root.CFrame = CFrame.new(CUSTOM_MERCHANT_POS)
                     task.wait(0.4)
 
-                    -- 3. TÌM PART VÀ PROXIMITYPROMPT CỦA NPC BÁN CÁ
                     local targetPrompt = nil
                     local targetPart = nil
                     
@@ -592,9 +622,7 @@ task.spawn(function()
                         end
                     end
 
-                    -- ĐI SÁT VÀ XOAY MẶT CHUẨN XÁC VÀO NPC
                     if targetPart then
-                        -- Đứng sát ngay cạnh NPC (cách 1.5 stud phía trước)
                         local npcPos = targetPart.Position
                         local targetStandPos = CFrame.new(npcPos + Vector3.new(0, 0, 2), npcPos)
                         root.CFrame = targetStandPos
@@ -603,7 +631,6 @@ task.spawn(function()
 
                     root.Anchored = true; hum.WalkSpeed = 0
 
-                    -- 4. BẬT E MỞ HỘI THOẠI VÀ BÁN TẤT CẢ CHO ĐẾN KHI HẾT CÁ
                     repeat
                         Status.Text = "ĐANG BÁN CÁ (CÒN " .. tostring(fCount) .. " CON)..."
                         
@@ -621,16 +648,17 @@ task.spawn(function()
                         fCount = getFish()
                     until fCount == 0 or not isRunning
 
-                    -- 5. BẤM TẠM BIỆT / THOÁT HỘI THOẠI
-                    Status.Text = "ĐANG ĐÓNG HỘI THOẠI..."
+                    Status.Text = "ĐANG ĐÓNG HỘI THOẠI (NHẤP NÚT TẠM BIỆT)..."
                     local cStart = tick()
                     while tick() - cStart < 3 do 
-                        clickBtn({"tạm biệt", "bye", "thoát", "close", "x"})
-                        task.wait(0.5) 
+                        local closed = clickBtn({"tạm biệt", "bye", "thoát", "close", "x", "leave", "exit"})
+                        if closed then
+                            break
+                        end
+                        task.wait(0.4) 
                     end
 
-                    -- 6. GỠ KHÓA CHÂN VÀ BAY MƯỢT VỀ BÃI CÂU CŨ
-                    Status.Text = "TÚI ĐÃ TRỐNG - ĐANG VỀ LẠI BÃI CÂU..."
+                    Status.Text = "TÚI ĐÃ TRỐNG - ĐANG VỀ BÃI CÂU..."
                     root.Anchored = true; hum.WalkSpeed = 16
                     
                     local dBack = (root.Position - FishingSpotCFrame.Position).Magnitude

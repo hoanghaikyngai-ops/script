@@ -37,7 +37,7 @@ ToggleBtn.Font = Enum.Font.GothamBold
 ToggleBtn.TextSize = 22
 ToggleBtn.AutoButtonColor = false
 ToggleBtn.Active = true
-ToggleBtn.Draggable = true -- Cho phép kéo thả nút toggle nếu muốn
+ToggleBtn.Draggable = true
 Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1, 0)
 
 local ToggleStroke = Instance.new("UIStroke", ToggleBtn)
@@ -311,7 +311,7 @@ Info.TextXAlignment = Enum.TextXAlignment.Left
 Info.TextYAlignment = Enum.TextYAlignment.Top
 
 local SECURE_TITLE = "HOANGHAI HUB - FISCH"
-local SECURE_INFO = "Tác giả: HOANGHAI\n- Tích hợp Toggle (Nút H xoay tròn) & Auto MiniGame Siêu Tốc.\n- Chúc các bạn chơi game vui vẻ!"
+local SECURE_INFO = "Tác giả: HOANGHAI\n- Đã tối ưu tốc độ bấm ZXCV & Tích hợp nút H xoay tròn.\n- Chúc các bạn chơi game vui vẻ!"
 Info.Text = SECURE_INFO
 
 task.spawn(function()
@@ -572,17 +572,18 @@ task.spawn(function()
                 if isHoldingRod then
                     local vp = Workspace.CurrentCamera.ViewportSize
                     
-                    -- Spam ZXCV khi câu
+                    -- Đã điều chỉnh tốc độ spam ZXCV vừa vặn để game nhận diện phím tốt hơn
                     local spam = true
                     task.spawn(function()
                         while spam and isRunning do
                             for _, k in ipairs({Enum.KeyCode.Z, Enum.KeyCode.X, Enum.KeyCode.C, Enum.KeyCode.V}) do
                                 if not spam or not isRunning then break end
                                 VirtualInputManager:SendKeyEvent(true, k, false, game)
-                                task.wait(0.02)
+                                task.wait(0.08) -- Tăng độ trễ ấn phím xuống để game kịp nhận
                                 VirtualInputManager:SendKeyEvent(false, k, false, game)
+                                task.wait(0.04)
                             end
-                            task.wait(0.05)
+                            task.wait(0.12)
                         end
                     end)
 

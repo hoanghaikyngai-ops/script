@@ -1,5 +1,5 @@
 -- ====================================================
--- HOANGHAI HUB - FISCH (FIX: KHÓA TẠI NPC NẾU CHƯA BÁN HẾT CÁ)
+-- HOANGHAI HUB - FISCH (FIX HOÀN CHỈNH & GIAO DIỆN CHUẨN)
 -- ====================================================
 local Players = game:GetService("Players")
 local VirtualInputManager = game:GetService("VirtualInputManager")
@@ -12,18 +12,15 @@ local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
--- 🛡️ Chống trùng lặp UI
-local SECURE_ID = "HOANGHAI_FISCH_PUBLIC_V24"
-if getgenv()[SECURE_ID] then
+-- 🛡️ Chống trùng lặp UI cũ
+if PlayerGui:FindFirstChild("HHubUI") then
     pcall(function() PlayerGui.HHubUI:Destroy() end)
 end
-getgenv()[SECURE_ID] = true
 
-if PlayerGui:FindFirstChild("HHubUI") then PlayerGui.HHubUI:Destroy() end
-
-local ScreenGui = Instance.new("ScreenGui", PlayerGui)
+local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "HHubUI"
 ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = PlayerGui
 
 -- NÚT TOGGLE (ĐÓNG/MỞ TAB)
 local ToggleBtn = Instance.new("TextButton", ScreenGui)
@@ -65,21 +62,6 @@ StaticTextH.TextSize = 44
 StaticTextH.TextXAlignment = Enum.TextXAlignment.Center
 StaticTextH.TextYAlignment = Enum.TextYAlignment.Center
 
-local HGrad = Instance.new("UIGradient", StaticTextH)
-HGrad.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 180, 0)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 180)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 180, 0))
-})
-task.spawn(function()
-    while ScreenGui.Parent do
-        HGrad.Offset = Vector2.new(-1, 0)
-        local tw = TweenService:Create(HGrad, TweenInfo.new(1.2, Enum.EasingStyle.Linear), {Offset = Vector2.new(1, 0)})
-        tw:Play(); tw.Completed:Wait()
-        task.wait(0.3)
-    end
-end)
-
 -- BẢNG MENU CHÍNH 
 local Main = Instance.new("Frame", ScreenGui)
 Main.Size = UDim2.new(0, 420, 0, 260)
@@ -110,13 +92,11 @@ ToggleBtn.MouseButton1Click:Connect(function()
     Main.Visible = uiVisible
 end)
 
+-- KÉO THẢ MENU
 local dragging, dragStart, startPos
 Main.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         dragging = true; dragStart = input.Position; startPos = Main.Position
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then dragging = false end
-        end)
     end
 end)
 UserInputService.InputEnded:Connect(function(input)
@@ -144,23 +124,6 @@ Title.TextColor3 = Color3.fromRGB(255, 215, 0)
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 13
 Title.TextXAlignment = Enum.TextXAlignment.Left
-
-local Grad = Instance.new("UIGradient", Title)
-Grad.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 215, 0)),
-    ColorSequenceKeypoint.new(0.4, Color3.fromRGB(255, 215, 0)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 255)),
-    ColorSequenceKeypoint.new(0.6, Color3.fromRGB(255, 215, 0)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 215, 0))
-})
-Grad.Rotation = 45
-task.spawn(function()
-    while ScreenGui.Parent do
-        Grad.Offset = Vector2.new(-1, 0)
-        local t = TweenService:Create(Grad, TweenInfo.new(1.2, Enum.EasingStyle.Linear), {Offset = Vector2.new(1, 0)})
-        t:Play(); t.Completed:Wait(); task.wait(2)
-    end
-end)
 
 local TabC = Instance.new("Frame", Main)
 TabC.Size = UDim2.new(0, 105, 1, -32)
@@ -378,20 +341,7 @@ Info.Font = Enum.Font.Gotham
 Info.TextSize = 12
 Info.TextXAlignment = Enum.TextXAlignment.Left
 Info.TextYAlignment = Enum.TextYAlignment.Top
-
-local SECURE_TITLE = "HOANGHAI HUB - FISCH"
-local SECURE_INFO = "Tác giả: HOANGHAI\n- Khóa tại NPC nếu cá chưa về 0."
-Info.Text = SECURE_INFO
-
-task.spawn(function()
-    while ScreenGui.Parent do
-        task.wait(0.5)
-        pcall(function()
-            if Title.Text ~= SECURE_TITLE then Title.Text = SECURE_TITLE end
-            if not Info.Text:find("HOANGHAI") then Info.Text = SECURE_INFO end
-        end)
-    end
-end)
+Info.Text = "Tác giả: HOANGHAI\n- Bản fix sạch sẽ, ổn định và mượt mà."
 
 Tab1.MouseButton1Click:Connect(function()
     P1.Visible = true; P2.Visible = false; P3.Visible = false
@@ -419,13 +369,13 @@ Toggle.MouseButton1Click:Connect(function()
     isRunning = not isRunning
     if isRunning then
         Toggle.Text = "TỰ ĐỘNG: BẬT"
-        TweenService:Create(Toggle, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(0, 170, 0)}):Play()
+        Toggle.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
         Status.Text = "ĐÃ BẬT!"
         local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
         if root then FishingSpotCFrame = root.CFrame end
     else
         Toggle.Text = "TỰ ĐỘNG: TẮT"
-        TweenService:Create(Toggle, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(170, 0, 0)}):Play()
+        Toggle.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
         Status.Text = "ĐÃ TẮT!"
         FishingSpotCFrame = nil
         pcall(function()
@@ -442,10 +392,10 @@ KillFishToggle.MouseButton1Click:Connect(function()
     isOneHoldOn = not isOneHoldOn
     if isOneHoldOn then
         KillFishToggle.Text = "CÂU TỨC THÌ: BẬT"
-        TweenService:Create(KillFishToggle, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(0, 140, 255)}):Play()
+        KillFishToggle.BackgroundColor3 = Color3.fromRGB(0, 140, 255)
     else
         KillFishToggle.Text = "CÂU TỨC THÌ: TẮT"
-        TweenService:Create(KillFishToggle, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(120, 120, 120)}):Play()
+        KillFishToggle.BackgroundColor3 = Color3.fromRGB(120, 120, 120)
     end
 end)
 
@@ -484,62 +434,52 @@ local CUSTOM_MERCHANT_POS = Vector3.new(1264.13, 27.42, -353.30)
 
 local function solveMiniGameFast()
     local inset = GuiService:GetGuiInset()
-    local clicked = false
     for _, obj in pairs(PlayerGui:GetDescendants()) do
-        if obj and obj.Parent and not obj:IsDescendantOf(ScreenGui) then
-            if obj.Visible then
-                local n = string.lower(obj.Name)
-                if n:find("minigame") or n:find("progress") or n:find("container") or n:find("bar") or n:find("prompt") or n:find("circle") or n:find("game") then
-                    for _, child in pairs(obj:GetDescendants()) do
-                        if child.Visible and (child:IsA("TextButton") or child:IsA("ImageButton") or child:IsA("Frame") or child:IsA("ImageLabel")) then
-                            local sz = child.AbsoluteSize
-                            local pos = child.AbsolutePosition
-                            if sz.X > 5 and sz.X < 250 and sz.Y > 5 and sz.Y < 250 then
-                                local cx = pos.X + sz.X / 2 + inset.X
-                                local cy = pos.Y + sz.Y / 2 + inset.Y
-                                VirtualInputManager:SendMouseButtonEvent(cx, cy, 0, true, game, 1)
-                                task.wait(0.001)
-                                VirtualInputManager:SendMouseButtonEvent(cx, cy, 0, false, game, 1)
-                                clicked = true
-                            end
+        if obj and obj.Parent and not obj:IsDescendantOf(ScreenGui) and obj.Visible then
+            local n = string.lower(obj.Name)
+            if n:find("minigame") or n:find("progress") or n:find("container") or n:find("bar") or n:find("prompt") then
+                for _, child in pairs(obj:GetDescendants()) do
+                    if child.Visible and (child:IsA("TextButton") or child:IsA("ImageButton") or child:IsA("Frame")) then
+                        local sz = child.AbsoluteSize
+                        local pos = child.AbsolutePosition
+                        if sz.X > 5 and sz.X < 250 and sz.Y > 5 and sz.Y < 250 then
+                            local cx = pos.X + sz.X / 2 + inset.X
+                            local cy = pos.Y + sz.Y / 2 + inset.Y
+                            VirtualInputManager:SendMouseButtonEvent(cx, cy, 0, true, game, 1)
+                            task.wait(0.001)
+                            VirtualInputManager:SendMouseButtonEvent(cx, cy, 0, false, game, 1)
                         end
                     end
                 end
             end
         end
     end
-    return clicked
 end
 
 local function triggerOneHit()
     pcall(function()
         for _, gui in pairs(PlayerGui:GetDescendants()) do
-            if gui and gui.Parent and not gui:IsDescendantOf(ScreenGui) then
-                if gui.Visible and (gui:IsA("Frame") or gui:IsA("TextLabel")) then
-                    local name = string.lower(gui.Name)
-                    if name:find("progress") or name:find("bar") or name:find("fish") or name:find("health") or name:find("container") or name:find("minigame") then
-                        for _, child in pairs(gui:GetDescendants()) do
-                            if child:IsA("Frame") and (child.Size.X.Scale > 0 or child.Size.X.Offset > 0) then
-                                child.Size = UDim2.new(0, 0, child.Size.Y.Scale, child.Size.Y.Offset)
-                            end
+            if gui and gui.Parent and not gui:IsDescendantOf(ScreenGui) and gui.Visible then
+                local name = string.lower(gui.Name)
+                if name:find("progress") or name:find("bar") or name:find("fish") or name:find("health") or name:find("minigame") then
+                    for _, child in pairs(gui:GetDescendants()) do
+                        if child:IsA("Frame") and (child.Size.X.Scale > 0 or child.Size.X.Offset > 0) then
+                            child.Size = UDim2.new(0, 0, child.Size.Y.Scale, child.Size.Y.Offset)
                         end
                     end
                 end
             end
         end
-    end
-end)
+    end)
+end
 
--- HÀM CLICK NÚT TRÊN GIAO DIỆN
+-- HÀM CLICK NÚT BÁN VÀ TẠM BIỆT AN TOÀN
 local function clickBtn(keys)
     local inset = GuiService:GetGuiInset()
-    local clickedAny = false
-    
     for _, obj in pairs(PlayerGui:GetDescendants()) do
         if obj and obj.Parent and not obj:IsDescendantOf(ScreenGui) then
             pcall(function()
                 if obj.Visible then
-                    local isInteractable = obj:IsA("TextButton") or obj:IsA("ImageButton")
                     local name = string.lower(obj.Name or "")
                     local text = ""
                     if obj:IsA("TextButton") or obj:IsA("TextLabel") then
@@ -549,7 +489,7 @@ local function clickBtn(keys)
                     for _, kw in ipairs(keys) do
                         if text:find(kw) or name:find(kw) then
                             local targetObj = obj
-                            if not isInteractable then
+                            if not (obj:IsA("TextButton") or obj:IsA("ImageButton")) then
                                 local ancestor = obj:FindFirstAncestorWhichIsA("TextButton") or obj:FindFirstAncestorWhichIsA("ImageButton")
                                 if ancestor then targetObj = ancestor end
                             end
@@ -561,17 +501,6 @@ local function clickBtn(keys)
                                 VirtualInputManager:SendMouseButtonEvent(cx, cy, 0, true, game, 1)
                                 task.wait(0.05)
                                 VirtualInputManager:SendMouseButtonEvent(cx, cy, 0, false, game, 1)
-                                
-                                if targetObj:IsA("TextButton") or targetObj:IsA("ImageButton") then
-                                    for _, conn in pairs(getconnections(targetObj.MouseButton1Click)) do
-                                        conn:Fire()
-                                    end
-                                    for _, conn in pairs(getconnections(targetObj.Activated)) do
-                                        conn:Fire()
-                                    end
-                                end
-                                
-                                clickedAny = true
                             end
                         end
                     end
@@ -579,7 +508,6 @@ local function clickBtn(keys)
             end)
         end
     end
-    return clickedAny
 end
 
 -- VÒNG LẶP CÀY CUỐC ĐỘC LẬP
@@ -631,11 +559,7 @@ task.spawn(function()
                             local parent = obj.Parent
                             if parent and parent:IsA("BasePart") then
                                 local parentName = string.lower(parent.Name)
-                                local distanceToMerchant = (parent.Position - CUSTOM_MERCHANT_POS).Magnitude
-                                local distanceToPlayer = (parent.Position - root.Position).Magnitude
-                                
-                                if (parentName:find("merchant") or parentName:find("fish") or parentName:find("sell") or parentName:find("fishmonger")) 
-                                   and distanceToMerchant < 25 and distanceToPlayer < 6 then
+                                if (parentName:find("merchant") or parentName:find("fish") or parentName:find("sell") or parentName:find("fishmonger")) then
                                     targetPrompt = obj
                                     targetPart = parent
                                     break
@@ -644,29 +568,12 @@ task.spawn(function()
                         end
                     end
 
-                    if not targetPrompt then
-                        local shortestDist = 6
-                        for _, obj in pairs(Workspace:GetDescendants()) do
-                            if obj:IsA("ProximityPrompt") then
-                                local parent = obj.Parent
-                                local d = (parent.Position - root.Position).Magnitude
-                                if d < shortestDist then
-                                    shortestDist = d
-                                    targetPrompt = obj
-                                    targetPart = parent
-                                end
-                            end
-                        end
-                    end
-
                     if targetPart then
-                        local npcPos = targetPart.Position
-                        local targetStandPos = CFrame.new(npcPos + Vector3.new(0, 0, 2), npcPos)
-                        root.CFrame = targetStandPos
+                        root.CFrame = CFrame.new(targetPart.Position + Vector3.new(0, 0, 2), targetPart.Position)
                         task.wait(0.2)
                     end
 
-                    -- BÁN CÁ CHO ĐẾN KHI SỐ CÁ VỀ 0 (NHÂN VẬT BỊ KHÓA CỨNG TẠI CHỖ NẾU CHƯA XONG)
+                    -- KHÓA CHẶT TẠI NPC VÀ LẶP LIÊN TỤC ĐẾN KHI CÁ VỀ 0
                     repeat
                         Status.Text = "ĐANG BÁN CÁ (CÒN " .. tostring(fCount) .. " CON) - ĐANG KHÓA TẠI NPC..."
                         root.Anchored = true
@@ -687,19 +594,14 @@ task.spawn(function()
                         fCount = getFish()
                     until fCount == 0 or not isRunning
 
-                    -- KHI SỐ CÁ ĐÃ VỀ 0: ẤN NÚT TẠM BIỆT ĐỂ ĐÓNG GIAO DIỆN
                     Status.Text = "CÁ ĐÃ HẾT (0) - ĐANG ẤN TẠM BIỆT..."
                     local cStart = tick()
                     while tick() - cStart < 4 do 
-                        local closed = clickBtn({"tạm biệt", "bye", "thoát", "close", "x", "leave", "exit"})
-                        if closed then
-                            break
-                        end
+                        clickBtn({"tạm biệt", "bye", "thoát", "close", "x", "leave", "exit"})
                         task.wait(0.3) 
                     end
                     task.wait(0.5)
 
-                    -- NHẢ KHÓA VÀ BAY VỀ TỌA ĐỘ BÃI CÂU ĐÃ LƯU
                     Status.Text = "TÚI ĐÃ TRỐNG - NHẢ KHÓA VỀ BÃI CÂU..."
                     root.Anchored = false
                     hum.WalkSpeed = 16
@@ -719,8 +621,8 @@ task.spawn(function()
                 local distToLock = (root.Position - FishingSpotCFrame.Position).Magnitude
                 if distToLock > 3 then
                     root.Anchored = true
-                    local lockTween = TweenService:Create(root, TweenInfo.new(dBack / 60, Enum.EasingStyle.Linear), {CFrame = FishingSpotCFrame})
-                    lockTween:Play(); lockTween.Completed:Wait()
+                    local backTween = TweenService:Create(root, TweenInfo.new(distToLock / 60, Enum.EasingStyle.Linear), {CFrame = FishingSpotCFrame})
+                    backTween:Play(); backTween.Completed:Wait()
                     root.Anchored = false
                 end
                 

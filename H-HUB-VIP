@@ -25,17 +25,31 @@ local Stroke = Instance.new("UIStroke", Main)
 Stroke.Color = Color3.fromRGB(255, 215, 0)
 Stroke.Thickness = 2
 
-local dragging, dragInput, dragStart, startPos
+-- Xử lý kéo thả và sửa lỗi dính chuột
+local dragging, dragStart, startPos
+
 Main.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true; dragStart = input.Position; startPos = Main.Position
+        dragging = true
+        dragStart = input.Position
+        startPos = Main.Position
+        
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
     end
 end)
-Main.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then dragInput = input end
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = false
+    end
 end)
+
 UserInputService.InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
+    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
         local delta = input.Position - dragStart
         Main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
     end
@@ -146,7 +160,31 @@ Info.Font = Enum.Font.Gotham
 Info.TextSize = 12
 Info.TextXAlignment = Enum.TextXAlignment.Left
 Info.TextYAlignment = Enum.TextYAlignment.Top
-Info.Text = "Tac gia: HOANGHAI\n- Tu dong nhan dien NPC.\n- Tu dong x xa skill & an E.\n- Gioi han bay trong dao."
+
+-- ==========================================
+-- BẢO VỆ TÊN SCRIPT VÀ TÊN TÁC GIẢ (ANTI-EDIT CREDITS)
+-- ==========================================
+local SECURE_TITLE = "HOANGHAI HUB - AUTO FISH"
+local SECURE_INFO = "Tac gia: HOANGHAI\n- Tu dong nhan dien NPC.\n- Tu dong x xa skill & an E.\n- Gioi han bay trong dao."
+
+Info.Text = SECURE_INFO
+
+task.spawn(function()
+    while task.wait(0.5) do
+        pcall(function()
+            if Title.Text ~= SECURE_TITLE then
+                Title.Text = SECURE_TITLE
+            end
+            if Info.Text ~= SECURE_INFO then
+                Info.Text = SECURE_INFO
+            end
+            if ScreenGui.Name ~= "HHubUI" then
+                ScreenGui.Name = "HHubUI"
+            end
+        end)
+    end
+end)
+-- ==========================================
 
 Tab1.MouseButton1Click:Connect(function()
     P1.Visible = true; P2.Visible = false
@@ -307,7 +345,7 @@ task.spawn(function()
                     root.Anchored = true; hum.WalkSpeed = 0
 
                     repeat
-                        Status.Text = "DANG BAN CA ("..fCount.to_string and tostring(fCount) or fCount..")..."
+                        Status.Text = "DANG BAN CA..."
                         VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
                         task.wait(0.1)
                         VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)

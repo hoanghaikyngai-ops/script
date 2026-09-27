@@ -1,3 +1,6 @@
+-- ====================================================
+-- HOANGHAI HUB - FISCH (PUBLIC VERSION)
+-- ====================================================
 local Players = game:GetService("Players")
 local VirtualInputManager = game:GetService("VirtualInputManager")
 local TweenService = game:GetService("TweenService")
@@ -9,8 +12,8 @@ local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
--- 🛡️ [BẢO MẬT] Chống trùng lặp và xác thực môi trường
-local SECURE_ID = "HOANGHAI_FISCH_SECURE_V1"
+-- 🛡️ Chống trùng lặp UI
+local SECURE_ID = "HOANGHAI_FISCH_PUBLIC_V1"
 if getgenv()[SECURE_ID] then
     pcall(function() PlayerGui.HHubUI:Destroy() end)
     return
@@ -64,7 +67,7 @@ local Title = Instance.new("TextLabel", TopBar)
 Title.Size = UDim2.new(1, -15, 1, 0)
 Title.Position = UDim2.new(0, 10, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "HOANGHAI HUB - FISCH (SECURED)"
+Title.Text = "HOANGHAI HUB - FISCH"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 13
@@ -134,7 +137,7 @@ Status.TextColor3 = Color3.fromRGB(255, 215, 0)
 Status.Font = Enum.Font.GothamBold
 Status.TextSize = 11
 Status.TextWrapped = true
-Status.Text = "HỆ THỐNG BẢO MẬT ĐÃ BẬT..."
+Status.Text = "HOANGHAI HUB ĐÃ SẴN SÀNG!"
 Instance.new("UICorner", Status).CornerRadius = UDim.new(0, 6)
 
 local Toggle = Instance.new("TextButton", P1)
@@ -201,9 +204,10 @@ local function flyToPos(targetPos)
         local char = LocalPlayer.Character
         local root = char and char:FindFirstChild("HumanoidRootPart")
         if root then
-            Status.Text = "CHUẨN BỊ (LAG TRƯỚC 3S)..."
+            -- 1. Lag trước chính xác 8 giây trước khi dịch chuyển
+            Status.Text = "ĐANG LAG TRƯỚC (8 GIÂY)..."
             setLag(99999)
-            task.wait(3.0)
+            task.wait(8.0)
 
             root.Anchored = true 
             local targetCFrame = CFrame.new(targetPos + Vector3.new(0, 5, 0))
@@ -220,6 +224,7 @@ local function flyToPos(targetPos)
             Status.Text = "DANG BAY TOC DO CAO..."
             tw.Completed:Wait()
             
+            -- 2. Giữ lag kéo dài 13 giây sau khi bay xong
             Status.Text = "ĐANG GIỮ LAG (13 GIÂY)..."
             task.wait(13.0)
             
@@ -248,7 +253,7 @@ for i, island in ipairs(Islands) do
     end)
 end
 
--- TRANG 3: THÔNG TIN VÀ BẢO VỆ TÁC GIẢ
+-- TRANG 3: THÔNG TIN & GIỮ TÊN TÁC GIẢ HOANGHAI
 local P3 = Instance.new("Frame", PageC)
 P3.Size = UDim2.new(1, 0, 1, 0)
 P3.BackgroundTransparency = 1
@@ -264,19 +269,15 @@ Info.TextXAlignment = Enum.TextXAlignment.Left
 Info.TextYAlignment = Enum.TextYAlignment.Top
 
 local SECURE_TITLE = "HOANGHAI HUB - FISCH"
-local SECURE_INFO = "Tác giả độc quyền: HOANGHAI\n- Bản quyền Script đã được mã hóa & bảo vệ.\n- Nghiêm cấm sao chép, thay đổi dưới mọi hình thức."
+local SECURE_INFO = "Tác giả: HOANGHAI\n- Tích hợp One-Hit Kill & Auto Sell.\n- Chúc các bạn chơi game vui vẻ!"
 Info.Text = SECURE_INFO
 
--- 🛡️ [ANTI-TAMPER] Luồng ngầm tự động chống sửa đổi tên, xóa UI hoặc giả mạo tác giả
+-- 🛡️ Quét ngầm bảo vệ bản quyền giao diện (chống người khác sửa tên tác giả)
 task.spawn(function()
     while task.wait(0.5) do
         pcall(function()
             if Title.Text ~= SECURE_TITLE then Title.Text = SECURE_TITLE end
             if not Info.Text:find("HOANGHAI") then Info.Text = SECURE_INFO end
-            if ScreenGui.Name ~= "HHubUI" or not ScreenGui.Parent then 
-                ScreenGui.Name = "HHubUI"
-                ScreenGui.Parent = PlayerGui
-            end
         end)
     end
 end)

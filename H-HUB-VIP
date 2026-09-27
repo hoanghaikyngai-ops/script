@@ -26,42 +26,46 @@ local ScreenGui = Instance.new("ScreenGui", PlayerGui)
 ScreenGui.Name = "HHubUI"
 ScreenGui.ResetOnSpawn = false
 
--- NÚT TOGGLE (ĐÓNG/MỞ TAB): HÌNH TRÒN RỖNG RUỘT, VIỀN VÀNG KIM LẤP LÁNH CỰC ĐẸP
+-- NÚT TOGGLE (ĐÓNG/MỞ TAB): HÌNH TRÒN RỖNG RUỘT, VIỀN ĐỎ + VIỀN VÀNG KIM LẤP LÁNH
 local ToggleBtn = Instance.new("TextButton", ScreenGui)
 ToggleBtn.Size = UDim2.new(0, 52, 0, 52)
 ToggleBtn.Position = UDim2.new(0, 20, 0, 120)
-ToggleBtn.BackgroundTransparency = 1 -- Rỗng ruột trong suốt
+ToggleBtn.BackgroundTransparency = 1 -- Rỗng ruột
 ToggleBtn.Text = ""
 ToggleBtn.AutoButtonColor = false
 ToggleBtn.Active = true
 ToggleBtn.Draggable = true
 Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1, 0)
 
--- Lớp viền vàng kim lấp lánh bao quanh nút Toggle
+-- Lớp viền đỏ Sharingan bên ngoài
+local ToggleStrokeRed = Instance.new("UIStroke", ToggleBtn)
+ToggleStrokeRed.Color = Color3.fromRGB(255, 0, 0)
+ToggleStrokeRed.Thickness = 3
+
+-- Lớp viền vàng kim lấp lánh chạy quanh viền nút Toggle
 local ToggleStrokeGold = Instance.new("UIStroke", ToggleBtn)
-ToggleStrokeGold.Thickness = 3
+ToggleStrokeGold.Thickness = 1.5
 local GoldStrokeGrad = Instance.new("UIGradient", ToggleStrokeGold)
 GoldStrokeGrad.Color = ColorSequence.new({
     ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 215, 0)),
-    ColorSequenceKeypoint.new(0.3, Color3.fromRGB(255, 255, 255)),
-    ColorSequenceKeypoint.new(0.6, Color3.fromRGB(255, 165, 0)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 215, 0))
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 200)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 165, 0))
 })
 task.spawn(function()
     while true do
-        GoldStrokeGrad.Rotation = (GoldStrokeGrad.Rotation + 8) % 360
-        task.wait(0.04)
+        GoldStrokeGrad.Rotation = (GoldStrokeGrad.Rotation + 6) % 360
+        task.wait(0.05)
     end
 end)
 
--- Chữ H đứng yên màu vàng kim lấp lánh ở giữa nút Toggle
+-- Chữ H đứng yên màu vàng kim lấp lánh ở giữa nút Toggle (Đã tăng size lên 44)
 local StaticTextH = Instance.new("TextLabel", ToggleBtn)
 StaticTextH.Size = UDim2.new(1, 0, 1, 0)
 StaticTextH.BackgroundTransparency = 1
 StaticTextH.Text = "H"
 StaticTextH.TextColor3 = Color3.fromRGB(255, 215, 0)
 StaticTextH.Font = Enum.Font.GothamBold
-StaticTextH.TextSize = 22
+StaticTextH.TextSize = 44
 StaticTextH.TextXAlignment = Enum.TextXAlignment.Center
 StaticTextH.TextYAlignment = Enum.TextYAlignment.Center
 
@@ -280,7 +284,6 @@ local FishingSpotCFrame = nil
 local function flyToPos(targetPos)
     pcall(function()
         Status.Text = "ĐANG TỰ SÁT & CHUẨN BỊ BAY..."
-        setLag(99999)
         
         local char = LocalPlayer.Character
         if char then
@@ -296,14 +299,27 @@ local function flyToPos(targetPos)
         connection = LocalPlayer.CharacterAdded:Connect(function(newChar)
             if connection then connection:Disconnect() end
             task.spawn(function()
-                local newRoot = newChar:WaitForChild("HumanoidRootPart", 10)
+                local newRoot = newChar:WaitForChild("HumanoidRootPart", 5)
                 if newRoot then
-                    Status.Text = "ĐÃ HỒI SINH - ĐANG BAY TỚI ĐẢO..."
-                    newRoot.Anchored = true 
+                    Status.Text = "ĐÃ HỒI SINH - ĐANG KHÓA CỨNG & BAY TỚI ĐẢO..."
+                    
                     local targetCFrame = CFrame.new(targetPos + Vector3.new(0, 5, 0))
                     
-                    newRoot.CFrame = targetCFrame
+                    -- Khóa cứng nhân vật liên tục chống bị kéo ngược về trong 7 giây
+                    local lockStartTime = tick()
+                    local lockConnection
+                    lockConnection = RunService.RenderStepped:Connect(function()
+                        if tick() - lockStartTime < 7.0 then
+                            newRoot.Anchored = true
+                            newRoot.CFrame = targetCFrame
+                        else
+                            newRoot.Anchored = false
+                            if lockConnection then lockConnection:Disconnect() end
+                        end
+                    end)
                     
+                    -- Bay mượt tới vị trí mục tiêu
+                    newRoot.CFrame = targetCFrame
                     local dist = (newRoot.Position - targetPos).Magnitude
                     local speed = 700
                     local timeToTween = dist / speed
@@ -314,18 +330,9 @@ local function flyToPos(targetPos)
                     if isRunning then FishingSpotCFrame = targetCFrame end
                     
                     tw.Completed:Wait()
+                    task.wait(0.5)
                     
-                    Status.Text = "ĐÃ ĐẾN NƠI - ĐANG KHÓA CHỐNG KÉO NGƯỢC..."
-                    local lockStart = tick()
-                    while tick() - lockStart < 3 do
-                        newRoot.CFrame = targetCFrame
-                        newRoot.Anchored = true
-                        task.wait(0.2)
-                    end
-                    
-                    newRoot.Anchored = false
-                    setLag(0)
-                    Status.Text = "HOÀN TẤT & AN TOÀN TẠI ĐẢO!"
+                    Status.Text = "ĐÃ ĐẾN NƠI & HOÀN TẤT KHÓA CỨNG!"
                 end
             end)
         end)
@@ -366,7 +373,7 @@ Info.TextXAlignment = Enum.TextXAlignment.Left
 Info.TextYAlignment = Enum.TextYAlignment.Top
 
 local SECURE_TITLE = "HOANGHAI HUB - FISCH"
-local SECURE_INFO = "Tác giả: HOANGHAI\n- Teleport: Chết xong hồi sinh bay thẳng tới đảo.\n- Nút Toggle: Viền vàng kim lấp lánh cực đẹp."
+local SECURE_INFO = "Tác giả: HOANGHAI\n- Teleport: Khóa cứng vị trí 7s chống kéo ngược về.\n- Nút Toggle: Chữ H phóng to siêu nét."
 Info.Text = SECURE_INFO
 
 task.spawn(function()

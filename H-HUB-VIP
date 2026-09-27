@@ -25,7 +25,7 @@ local Stroke = Instance.new("UIStroke", Main)
 Stroke.Color = Color3.fromRGB(255, 215, 0)
 Stroke.Thickness = 2
 
--- Kéo thả UI
+-- Kéo thả UI và chống dính chuột
 local dragging, dragStart, startPos
 Main.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -152,7 +152,7 @@ Info.TextXAlignment = Enum.TextXAlignment.Left
 Info.TextYAlignment = Enum.TextYAlignment.Top
 
 local SECURE_TITLE = "HOANGHAI HUB - AUTO FISH"
-local SECURE_INFO = "Tac gia: HOANGHAI\n- Da tối ưu tìm 'Fish Merchant'.\n- Tu dong x xa skill & an E.\n- Gioi han bay trong dao."
+local SECURE_INFO = "Tac gia: HOANGHAI\n- Dung toa do Fish Merchant.\n- Tu dong x xa skill & an E.\n- Gioi han bay trong dao."
 Info.Text = SECURE_INFO
 
 task.spawn(function()
@@ -218,32 +218,11 @@ local function getFish()
     return count
 end
 
--- TÌM CHÍNH XÁC FISH MERCHANT
+-- TỌA ĐỘ CỐ ĐỊNH CỦA FISH MERCHANT LẤY TỪ ẢNH CỦA BẠN
+local CUSTOM_MERCHANT_POS = Vector3.new(1264.13, 27.42, -353.30) 
+
 local function getNPC(pos)
-    local targetPos = nil
-    local shortestDist = math.huge
-
-    for _, obj in pairs(Workspace:GetDescendants()) do
-        local nameLower = string.lower(obj.Name)
-        if nameLower:find("fish merchant") or nameLower:find("fishmerchant") then
-            local pPos = nil
-            if obj:IsA("BasePart") then
-                pPos = obj.Position
-            elseif obj:IsA("Model") then
-                pPos = (obj.PrimaryPart and obj.PrimaryPart.Position) or obj:GetPivot().Position
-            end
-            
-            if pPos then
-                local d = (pPos - pos).Magnitude
-                if d < shortestDist then
-                    shortestDist = d
-                    targetPos = pPos
-                end
-            end
-        end
-    end
-
-    return targetPos
+    return CUSTOM_MERCHANT_POS
 end
 
 local function solveArrows()
@@ -307,7 +286,7 @@ task.spawn(function()
                 local fCount = getFish()
                 if fCount >= 50 then
                     LockCFrame = root.CFrame
-                    Status.Text = "TUI DAY -> TIM FISH MERCHANT..."
+                    Status.Text = "TUI DAY -> BAY TOI FISH MERCHANT..."
                     local vp = Workspace.CurrentCamera.ViewportSize
                     VirtualInputManager:SendMouseButtonEvent(vp.X/2, vp.Y/2, 0, true, game, 1)
                     task.wait(0.05)
@@ -315,11 +294,6 @@ task.spawn(function()
                     task.wait(0.2)
 
                     local tPos = getNPC(root.Position)
-                    if not tPos then 
-                        Status.Text = "KHONG THAY FISH MERCHANT!"
-                        task.wait(2)
-                        return 
-                    end
 
                     Status.Text = "BAY TOI FISH MERCHANT..."
                     hum.WalkSpeed = 16; root.Anchored = false

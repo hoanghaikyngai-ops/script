@@ -1,6 +1,5 @@
 local Players = game:GetService("Players")
 local VirtualInputManager = game:GetService("VirtualInputManager")
-local TweenService = game:GetService("TweenService")
 local Workspace = game:GetService("Workspace")
 local GuiService = game:GetService("GuiService")
 
@@ -10,18 +9,21 @@ if PlayerGui:FindFirstChild("HHubUI") then PlayerGui.HHubUI:Destroy() end
 
 local ScreenGui = Instance.new("ScreenGui", PlayerGui)
 ScreenGui.Name = "HHubUI"
+ScreenGui.ResetOnSpawn = false
 
 local Main = Instance.new("Frame", ScreenGui)
-Main.Size = UDim2.new(0, 380, 0, 240)
-Main.Position = UDim2.new(0.5, -190, 0.3, 0)
+Main.Size = UDim2.new(0, 360, 0, 220)
+Main.Position = UDim2.new(0.5, -180, 0.3, 0)
 Main.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+Main.Active = true
+Main.Draggable = true
 Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 8)
 Instance.new("UIStroke", Main).Color = Color3.fromRGB(255, 215, 0)
 
 local Title = Instance.new("TextLabel", Main)
 Title.Size = UDim2.new(1, 0, 0, 30)
 Title.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
-Title.Text = " HOANGHAI HUB - FISCH DELTA"
+Title.Text = " HOANGHAI HUB - FISCH"
 Title.TextColor3 = Color3.fromRGB(255, 215, 0)
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 12
@@ -30,7 +32,7 @@ Instance.new("UICorner", Title).CornerRadius = UDim.new(0, 8)
 
 local Status = Instance.new("TextLabel", Main)
 Status.Size = UDim2.new(1, -20, 0, 32)
-Status.Position = UDim2.new(0, 10, 0, 38)
+Status.Position = UDim2.new(0, 10, 0, 40)
 Status.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
 Status.TextColor3 = Color3.fromRGB(255, 255, 255)
 Status.Font = Enum.Font.GothamBold
@@ -39,153 +41,95 @@ Status.Text = "Trạng thái: Sẵn sàng..."
 Instance.new("UICorner", Status).CornerRadius = UDim.new(0, 6)
 
 local Toggle = Instance.new("TextButton", Main)
-Toggle.Size = UDim2.new(1, -20, 0, 32)
-Toggle.Position = UDim2.new(0, 10, 0, 76)
+Toggle.Size = UDim2.new(1, -20, 0, 35)
+Toggle.Position = UDim2.new(0, 10, 0, 82)
 Toggle.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
 Toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
 Toggle.Font = Enum.Font.GothamBold
 Toggle.TextSize = 12
-Toggle.Text = "AUTO CÂU & BÁN CÁ: BẬT"
+Toggle.Text = "AUTO CÂU CÁ: BẬT"
 Instance.new("UICorner", Toggle).CornerRadius = UDim.new(0, 6)
 
-local KillLag = Instance.new("TextButton", Main)
-KillLag.Size = UDim2.new(1, -20, 0, 32)
-KillLag.Position = UDim2.new(0, 10, 0, 114)
-KillLag.BackgroundColor3 = Color3.fromRGB(0, 140, 255)
-KillLag.TextColor3 = Color3.fromRGB(255, 255, 255)
-KillLag.Font = Enum.Font.GothamBold
-KillLag.TextSize = 11
-KillLag.Text = "LAG MẠNG CHỐNG BAN: BẬT"
-Instance.new("UICorner", KillLag).CornerRadius = UDim.new(0, 6)
-
 local TpBtn = Instance.new("TextButton", Main)
-TpBtn.Size = UDim2.new(1, -20, 0, 32)
-TpBtn.Position = UDim2.new(0, 10, 0, 152)
-TpBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 90)
+TpBtn.Size = UDim2.new(1, -20, 0, 35)
+TpBtn.Position = UDim2.new(0, 10, 0, 125)
+TpBtn.BackgroundColor3 = Color3.fromRGB(0, 140, 255)
 TpBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 TpBtn.Font = Enum.Font.GothamBold
 TpBtn.TextSize = 11
 TpBtn.Text = "ĐẾN: Starter Island"
 Instance.new("UICorner", TpBtn).CornerRadius = UDim.new(0, 6)
 
-local TpBack = Instance.new("TextButton", Main)
-TpBack.Size = UDim2.new(1, -20, 0, 32)
-TpBack.Position = UDim2.new(0, 10, 0, 190)
-TpBack.BackgroundColor3 = Color3.fromRGB(120, 60, 140)
-TpBack.TextColor3 = Color3.fromRGB(255, 255, 255)
-TpBack.Font = Enum.Font.GothamBold
-TpBack.TextSize = 11
-TpBack.Text = "← ĐẢO TRƯỚC ĐÓ"
-Instance.new("UICorner", TpBack).CornerRadius = UDim.new(0, 6)
+local Info = Instance.new("TextLabel", Main)
+Info.Size = UDim2.new(1, -20, 0, 35)
+Info.Position = UDim2.new(0, 10, 0, 168)
+Info.BackgroundTransparency = 1
+Info.TextColor3 = Color3.fromRGB(180, 180, 180)
+Info.Font = Enum.Font.Gotham
+Info.TextSize = 10
+Info.Text = "Giữ và kéo bảng UI nếu bị vướng."
 
--- Danh sách 5 đảo chuẩn xác từ tọa độ của bạn
 local islands = {
-    {Name = "Starter Island", Pos = Vector3.new(-41.90, 11.09, 303.40)},[cite: 2]
-    {Name = "Jungle Island", Pos = Vector3.new(-1166.36, 10.68, -66.31)},[cite: 2]
-    {Name = "Desert Island", Pos = Vector3.new(-51.02, 10.13, -954.41)},[cite: 2]
-    {Name = "Snow Island", Pos = Vector3.new(1195.07, 9.38, -284.33)},[cite: 2]
-    {Name = "Volcano Island", Pos = Vector3.new(1807.50, 9.17, 1073.44)}[cite: 2]
+    {Name = "Starter Island", Pos = Vector3.new(-41.90, 11.09, 303.40)},
+    {Name = "Jungle Island", Pos = Vector3.new(-1166.36, 10.68, -66.31)},
+    {Name = "Desert Island", Pos = Vector3.new(-51.02, 10.13, -954.41)},
+    {Name = "Snow Island", Pos = Vector3.new(1195.07, 9.38, -284.33)},
+    {Name = "Volcano Island", Pos = Vector3.new(1807.50, 9.17, 1073.44)}
 }
 local curIsland = 1
-
-local function teleportTo(targetPos)
-    pcall(function()
-        local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-        if root then
-            settings():GetService("NetworkSettings"):SetIncomingReplicationLag(9999)
-            task.wait(0.1)
-            root.CFrame = CFrame.new(targetPos + Vector3.new(0, 5, 0))
-            task.wait(0.5)
-            settings():GetService("NetworkSettings"):SetIncomingReplicationLag(0)
-        end
-    end)
-end
 
 TpBtn.MouseButton1Click:Connect(function()
     curIsland = curIsland % #islands + 1
     local isl = islands[curIsland]
     TpBtn.Text = "ĐẾN: " .. isl.Name
-    teleportTo(isl.Pos)
+    pcall(function()
+        local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if root then
+            root.CFrame = CFrame.new(isl.Pos + Vector3.new(0, 5, 0))
+        end
+    end)
 end)
 
-TpBack.MouseButton1Click:Connect(function()
-    curIsland = (curIsland - 2 + #islands) % #islands + 1
-    local isl = islands[curIsland]
-    TpBtn.Text = "ĐẾN: " .. isl.Name
-    teleportTo(isl.Pos)
-end)
-
-local isRunning, isLagOn = true, true
+local isRunning = true
 Toggle.MouseButton1Click:Connect(function()
     isRunning = not isRunning
     Toggle.BackgroundColor3 = isRunning and Color3.fromRGB(0, 170, 0) or Color3.fromRGB(170, 0, 0)
-    Toggle.Text = isRunning and "AUTO CÂU & BÁN CÁ: BẬT" or "AUTO CÂU & BÁN CÁ: TẮT"
+    Toggle.Text = isRunning and "AUTO CÂU CÁ: BẬT" or "AUTO CÂU CÁ: TẮT"
 end)
-
-KillLag.MouseButton1Click:Connect(function()
-    isLagOn = not isLagOn
-    KillLag.BackgroundColor3 = isLagOn and Color3.fromRGB(0, 140, 255) or Color3.fromRGB(120, 120, 120)
-    KillLag.Text = isLagOn and "LAG MẠNG CHỐNG BAN: BẬT" or "LAG MẠNG CHỐNG BAN: TẮT"
-end)
-
--- Cải tiến quét mũi tên thông minh hơn (bắt chuẩn mọi ký hiệu hướng dẫn mini-game)
-local function solveArrows()
-    local inset = GuiService:GetGuiInset()
-    for _, obj in pairs(PlayerGui:GetDescendants()) do
-        if obj.Visible then
-            local n = string.lower(obj.Name)
-            local t = (obj:IsA("TextLabel") or obj:IsA("TextButton")) and string.lower(obj.Text) or ""
-            local img = (obj:IsA("ImageLabel") or obj:IsA("ImageButton")) and string.lower(obj.Image) or ""
-            
-            if n:find("arrow") or n:find("direction") or n:find("pointer") or n:find("mini") or
-               t:find("▲") or t:find("▼") or t:find("◄") or t:find("►") or t:find("↑") or t:find("↓") or t:find("←") or t:find("→") or 
-               img:find("arrow") or img:find("pointer") then
-                
-                local pos, sz = obj.AbsolutePosition, obj.AbsoluteSize
-                if sz.X > 0 and sz.Y > 0 then
-                    local cx = pos.X + sz.X / 2 + inset.X
-                    local cy = pos.Y + sz.Y / 2 + inset.Y
-                    VirtualInputManager:SendMouseButtonEvent(cx, cy, 0, true, game, 1)
-                    task.wait(0.01)
-                    VirtualInputManager:SendMouseButtonEvent(cx, cy, 0, false, game, 1)
-                    return true
-                end
-            end
-        end
-    end
-    return false
-end
 
 task.spawn(function()
-    while task.wait(0.4) do
+    while task.wait(0.5) do
         if isRunning then
             pcall(function()
                 local char = LocalPlayer.Character
-                local root = char and char:FindFirstChild("HumanoidRootPart")
                 local hum = char and char:FindFirstChildOfClass("Humanoid")
-                if not root or not hum then return end
-                
-                local tool = char:FindFirstChildOfClass("Tool") or (LocalPlayer.Backpack:FindFirstChildOfClass("Tool"))
-                if tool and tool.Parent ~= char then hum:EquipTool(tool) end
+                local tool = char and char:FindFirstChildOfClass("Tool") or (LocalPlayer.Backpack:FindFirstChildOfClass("Tool"))
+                if tool and tool.Parent ~= char and hum then hum:EquipTool(tool) end
                 
                 if tool then
                     Status.Text = "Trạng thái: Đang thả câu..."
                     tool:Activate()
                     task.wait(1.5)
                     
-                    -- Kích hoạt lag mạng giữ gói tin chống anti-cheat nếu bật
-                    if isLagOn then settings():GetService("NetworkSettings"):SetIncomingReplicationLag(999) end
-                    
                     Status.Text = "Trạng thái: Đang xử lý mini-game..."
                     local tStart = tick()
-                    while tick() - tStart < 8 and isRunning do
-                        solveArrows()
-                        task.wait(0.01)
+                    while tick() - tStart < 6 and isRunning do
+                        local inset = GuiService:GetGuiInset()
+                        for _, obj in pairs(PlayerGui:GetDescendants()) do
+                            if obj.Visible and (obj:IsA("TextButton") or obj:IsA("ImageButton") or obj:IsA("TextLabel")) then
+                                local name = string.lower(obj.Name)
+                                local text = obj:IsA("TextLabel") and string.lower(obj.Text) or ""
+                                if name:find("arrow") or name:find("pointer") or text:find("▲") or text:find("▼") or text:find("◄") or text:find("►") then
+                                    local pos = obj.AbsolutePosition + obj.AbsoluteSize/2 + inset
+                                    VirtualInputManager:SendMouseButtonEvent(pos.X, pos.Y, 0, true, game, 1)
+                                    task.wait(0.01)
+                                    VirtualInputManager:SendMouseButtonEvent(pos.X, pos.Y, 0, false, game, 1)
+                                end
+                            end
+                        end
+                        task.wait(0.05)
                     end
                     
-                    if isLagOn then settings():GetService("NetworkSettings"):SetIncomingReplicationLag(0) end
-                    
-                    -- Click kết thúc lượt câu
                     local vp = Workspace.CurrentCamera.ViewportSize
                     VirtualInputManager:SendMouseButtonEvent(vp.X/2, vp.Y/2, 0, true, game, 1)
                     task.wait(0.05)

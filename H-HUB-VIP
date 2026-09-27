@@ -281,10 +281,13 @@ local isRunning = true
 local isOneHoldOn = true
 local FishingSpotCFrame = nil
 
--- HÀM TELEPORT CÓ TÍCH HỢP KHÓA CỨNG 7 GIÂY CHỐNG BỊ KÉO NGƯỢC VỀ
+-- HÀM TELEPORT AN TOÀN: KẾT HỢP LAG MẠNG + KHÓA CỨNG 7S CHỐNG KÉO NGƯỢC VỀ
 local function flyToPos(targetPos)
     pcall(function()
-        Status.Text = "ĐANG TỰ SÁT & CHUẨN BỊ BAY..."
+        Status.Text = "ĐANG TỰ SÁT & GÂY LAG ĐÁNH LỪA BOT..."
+        
+        -- Kích hoạt lag mạng đánh lừa server trước khi chết/teleport
+        setLag(99999)
         
         local char = LocalPlayer.Character
         if char then
@@ -302,7 +305,7 @@ local function flyToPos(targetPos)
             task.spawn(function()
                 local newRoot = newChar:WaitForChild("HumanoidRootPart", 5)
                 if newRoot then
-                    Status.Text = "ĐÃ HỒI SINH - ĐANG KHÓA CỨNG & BAY TỚI ĐẢO..."
+                    Status.Text = "ĐÃ HỒI SINH - ĐANG KHÓA CỨNG VỊ TRÍ & BAY..."
                     
                     local targetCFrame = CFrame.new(targetPos + Vector3.new(0, 5, 0))
                     
@@ -333,7 +336,9 @@ local function flyToPos(targetPos)
                     tw.Completed:Wait()
                     task.wait(0.5)
                     
-                    Status.Text = "ĐÃ ĐẾN NƠI & HOÀN TẤT KHÓA CỨNG!"
+                    -- Khôi phục mạng bình thường sau khi hoàn tất
+                    setLag(0)
+                    Status.Text = "ĐÃ ĐẾN NƠI & KHÔI PHỤC MẠNG AN TOÀN!"
                 end
             end)
         end)
@@ -374,7 +379,7 @@ Info.TextXAlignment = Enum.TextXAlignment.Left
 Info.TextYAlignment = Enum.TextYAlignment.Top
 
 local SECURE_TITLE = "HOANGHAI HUB - FISCH"
-local SECURE_INFO = "Tác giả: HOANGHAI\n- Teleport: Khóa cứng vị trí 7s chống kéo ngược về.\n- Nút Toggle: Chữ H phóng to siêu nét."
+local SECURE_INFO = "Tác giả: HOANGHAI\n- Teleport: Lag giả lập + Khóa cứng 7s chống kéo ngược.\n- Nút Toggle: Chữ H phóng to siêu nét."
 Info.Text = SECURE_INFO
 
 task.spawn(function()

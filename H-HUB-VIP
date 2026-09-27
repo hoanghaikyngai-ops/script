@@ -26,23 +26,22 @@ local ScreenGui = Instance.new("ScreenGui", PlayerGui)
 ScreenGui.Name = "HHubUI"
 ScreenGui.ResetOnSpawn = false
 
--- NÚT TOGGLE (ĐÓNG/MỞ TAB) HÌNH TRÒN CÓ CHỮ H ĐỨNG YÊN & VIỀN + TOMOE SHARINGAN QUAY TRÒN
+-- NÚT TOGGLE (ĐÓNG/MỞ TAB): HÌNH TRÒN RỖNG RUỘT, VIỀN ĐỎ & CHỮ H VÀNG KIM LẤP LÁNH
 local ToggleBtn = Instance.new("TextButton", ScreenGui)
 ToggleBtn.Size = UDim2.new(0, 52, 0, 52)
 ToggleBtn.Position = UDim2.new(0, 20, 0, 120)
-ToggleBtn.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+ToggleBtn.BackgroundTransparency = 1 -- Rỗng ruột
 ToggleBtn.Text = ""
 ToggleBtn.AutoButtonColor = false
 ToggleBtn.Active = true
 ToggleBtn.Draggable = true
+
+local ToggleStroke = Instance.new("UIStroke", ToggleBtn)
+ToggleStroke.Color = Color3.fromRGB(255, 0, 0) -- Viền đỏ rực Sharingan
+ToggleStroke.Thickness = 3
 Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1, 0)
 
--- Viền nút màu đỏ chuẩn Sharingan
-local ToggleStroke = Instance.new("UIStroke", ToggleBtn)
-ToggleStroke.Color = Color3.fromRGB(255, 0, 0)
-ToggleStroke.Thickness = 3
-
--- Chữ H đứng yên nằm chính giữa nút Toggle
+-- Chữ H đứng yên màu vàng kim lấp lánh ở giữa nút Toggle
 local StaticTextH = Instance.new("TextLabel", ToggleBtn)
 StaticTextH.Size = UDim2.new(1, 0, 1, 0)
 StaticTextH.BackgroundTransparency = 1
@@ -53,57 +52,44 @@ StaticTextH.TextSize = 22
 StaticTextH.TextXAlignment = Enum.TextXAlignment.Center
 StaticTextH.TextYAlignment = Enum.TextYAlignment.Center
 
--- Hiệu ứng Sharingan: Vòng các Tomoe/Mắt đỏ xoay quanh viền
-local SharinganHolder = Instance.new("Frame", ToggleBtn)
-SharinganHolder.Size = UDim2.new(1, 0, 1, 0)
-SharinganHolder.BackgroundTransparency = 1
-SharinganHolder.AnchorPoint = Vector2.new(0.5, 0.5)
-SharinganHolder.Position = UDim2.new(0.5, 0, 0.5, 0)
-
-local activeSymbols = {}
--- Sử dụng ký hiệu Tomoe (o) kết hợp Mắt Sharingan (👁️) để tạo hoạt ảnh chuẩn chủ đề
-local tomoeSymbols = {"👁️", "࿊", "👁️", "࿊"} 
-for i = 1, 4 do
-    local lbl = Instance.new("TextLabel", SharinganHolder)
-    lbl.Size = UDim2.new(0, 16, 0, 16)
-    lbl.BackgroundTransparency = 1
-    lbl.Text = tomoeSymbols[i]
-    lbl.TextColor3 = Color3.fromRGB(255, 0, 0) -- Màu đỏ Sharingan
-    lbl.Font = Enum.Font.GothamBold
-    lbl.TextSize = 13
-    lbl.AnchorPoint = Vector2.new(0.5, 0.5)
-    table.insert(activeSymbols, lbl)
-end
-
--- Vòng lặp xoay viền Sharingan kiểm tra độ mượt / lag thực tế
+local HGrad = Instance.new("UIGradient", StaticTextH)
+HGrad.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 180, 0)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 180)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 180, 0))
+})
 task.spawn(function()
-    local angle = 0
     while true do
-        angle = (angle + 4) % 360
-        local rad = math.rad(angle)
-        local radius = 24
-        
-        for i, lbl in ipairs(activeSymbols) do
-            local offsetAngle = rad + math.rad((i - 1) * 90)
-            local x = math.cos(offsetAngle) * radius
-            local y = math.sin(offsetAngle) * radius
-            lbl.Position = UDim2.new(0.5, x, 0.5, y)
-        end
-        task.wait(0.03)
+        HGrad.Offset = Vector2.new(-1, 0)
+        local tw = TweenService:Create(HGrad, TweenInfo.new(1.2, Enum.EasingStyle.Linear), {Offset = Vector2.new(1, 0)})
+        tw:Play(); tw.Completed:Wait()
+        task.wait(0.3)
     end
 end)
 
--- BẢNG MENU CHÍNH (MAIN)
+-- BẢNG MENU CHÍNH (MAIN) VỚI VIỀN VÀNG KIM LẤP LÁNH
 local Main = Instance.new("Frame", ScreenGui)
 Main.Size = UDim2.new(0, 420, 0, 260)
 Main.Position = UDim2.new(0.5, -210, 0.2, 0)
-Main.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+Main.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
 Main.BorderSizePixel = 0
 Main.Active = true
 Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 8)
-local Stroke = Instance.new("UIStroke", Main)
-Stroke.Color = Color3.fromRGB(255, 215, 0)
-Stroke.Thickness = 2
+
+local MainStroke = Instance.new("UIStroke", Main)
+MainStroke.Thickness = 2
+local MainStrokeGrad = Instance.new("UIGradient", MainStroke)
+MainStrokeGrad.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 215, 0)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 200)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 165, 0))
+})
+task.spawn(function()
+    while true do
+        MainStrokeGrad.Rotation = (MainStrokeGrad.Rotation + 5) % 360
+        task.wait(0.05)
+    end
+end)
 
 local uiVisible = true
 ToggleBtn.MouseButton1Click:Connect(function()
@@ -111,6 +97,7 @@ ToggleBtn.MouseButton1Click:Connect(function()
     Main.Visible = uiVisible
 end)
 
+-- Kéo thả UI chính
 local dragging, dragStart, startPos
 Main.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -141,7 +128,7 @@ Title.Size = UDim2.new(1, -15, 1, 0)
 Title.Position = UDim2.new(0, 10, 0, 0)
 Title.BackgroundTransparency = 1
 Title.Text = "HOANGHAI HUB - FISCH"
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextColor3 = Color3.fromRGB(255, 215, 0)
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 13
 Title.TextXAlignment = Enum.TextXAlignment.Left
@@ -284,46 +271,43 @@ local function flyToPos(targetPos)
         local root = char and char:FindFirstChild("HumanoidRootPart")
         
         if hum and root then
-            -- 1. Tự sát (cho nhân vật chết)
-            Status.Text = "ĐANG TỰ SÁT (CHO NHÂN VẬT CHẾT)..."
+            -- 1. Tự sát để kích hoạt bay ngay lập tức
+            Status.Text = "ĐANG TỰ SÁT ĐỂ BAY LẬP TỨC..."
             hum.Health = 0
             
-            -- Đợi nhân vật hồi sinh lại
-            LocalPlayer.CharacterAdded:Wait()
-            
-            -- Đợi đúng 1 giây sau khi hồi sinh rồi tiến hành bay
-            task.wait(1.0)
-            
-            char = LocalPlayer.Character
-            hum = char:FindFirstChildOfClass("Humanoid")
-            root = char:FindFirstChild("HumanoidRootPart")
-            
-            if not root or not hum then return end
+            -- Hồi sinh xong là ngắt mạng & bay liền không chần chừ
+            local connection
+            connection = LocalPlayer.CharacterAdded:Connect(function(newChar)
+                if connection then connection:Disconnect() end
+                task.spawn(function()
+                    task.wait(0.2)
+                    local newRoot = newChar:WaitForChild("HumanoidRootPart", 3)
+                    if newRoot then
+                        Status.Text = "ĐANG NGẮT MẠNG & BAY TỚI ĐẢO..."
+                        setLag(99999)
+                        task.wait(9.0)
 
-            -- 2. Tiến hành ngắt mạng & bay tới đảo
-            Status.Text = "ĐANG NGẮT MẠNG (ĐỢI 9 GIÂY)..."
-            setLag(99999)
-            task.wait(9.0)
-
-            Status.Text = "ĐÃ HIỆN BẢNG MẤT MẠNG - ĐANG BAY TỐC ĐỘ 700..."
-            root.Anchored = true 
-            local targetCFrame = CFrame.new(targetPos + Vector3.new(0, 5, 0))
-            
-            local dist = (root.Position - targetPos).Magnitude
-            local speed = 700
-            local timeToTween = dist / speed
-            
-            local tw = TweenService:Create(root, TweenInfo.new(timeToTween, Enum.EasingStyle.Linear), {CFrame = targetCFrame})
-            tw:Play()
-            
-            if isRunning then FishingSpotCFrame = targetCFrame end
-            
-            tw.Completed:Wait()
-            task.wait(1.0)
-            
-            root.Anchored = false
-            setLag(0)
-            Status.Text = "ĐÃ ĐẾN NƠI & KHÔI PHỤC MẠNG!"
+                        newRoot.Anchored = true 
+                        local targetCFrame = CFrame.new(targetPos + Vector3.new(0, 5, 0))
+                        
+                        local dist = (newRoot.Position - targetPos).Magnitude
+                        local speed = 700
+                        local timeToTween = dist / speed
+                        
+                        local tw = TweenService:Create(newRoot, TweenInfo.new(timeToTween, Enum.EasingStyle.Linear), {CFrame = targetCFrame})
+                        tw:Play()
+                        
+                        if isRunning then FishingSpotCFrame = targetCFrame end
+                        
+                        tw.Completed:Wait()
+                        task.wait(0.5)
+                        
+                        newRoot.Anchored = false
+                        setLag(0)
+                        Status.Text = "ĐÃ ĐẾN NƠI & KHÔI PHỤC MẠNG!"
+                    end
+                end)
+            end)
         end
     end)
 end
@@ -362,7 +346,7 @@ Info.TextXAlignment = Enum.TextXAlignment.Left
 Info.TextYAlignment = Enum.TextYAlignment.Top
 
 local SECURE_TITLE = "HOANGHAI HUB - FISCH"
-local SECURE_INFO = "Tác giả: HOANGHAI\n- Viền đỏ rực & Tomoe Sharingan xoay báo lag.\n- Chết xong đợi 1s là tele ngay."
+local SECURE_INFO = "Tác giả: HOANGHAI\n- Chết xong hồi sinh bay lập tức.\n- Viền đỏ, chữ H & Menu vàng kim lấp lánh."
 Info.Text = SECURE_INFO
 
 task.spawn(function()

@@ -26,6 +26,40 @@ local ScreenGui = Instance.new("ScreenGui", PlayerGui)
 ScreenGui.Name = "HHubUI"
 ScreenGui.ResetOnSpawn = false
 
+-- NÚT TOGGLE (ĐÓNG/MỞ TAB) HÌNH TRÒN CÓ CHỮ H & HOẠT ẢNH QUAY TRÒN
+local ToggleBtn = Instance.new("TextButton", ScreenGui)
+ToggleBtn.Size = UDim2.new(0, 48, 0, 48)
+ToggleBtn.Position = UDim2.new(0, 20, 0, 120)
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+ToggleBtn.Text = "H"
+ToggleBtn.TextColor3 = Color3.fromRGB(255, 215, 0)
+ToggleBtn.Font = Enum.Font.GothamBold
+ToggleBtn.TextSize = 22
+ToggleBtn.AutoButtonColor = false
+ToggleBtn.Active = true
+ToggleBtn.Draggable = true -- Cho phép kéo thả nút toggle nếu muốn
+Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1, 0)
+
+local ToggleStroke = Instance.new("UIStroke", ToggleBtn)
+ToggleStroke.Color = Color3.fromRGB(255, 215, 0)
+ToggleStroke.Thickness = 2
+
+local ToggleGrad = Instance.new("UIGradient", ToggleBtn)
+ToggleGrad.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 215, 0)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 215, 0))
+})
+
+-- Hoạt ảnh quay tròn cho nút Toggle
+task.spawn(function()
+    while true do
+        ToggleGrad.Rotation = (ToggleGrad.Rotation + 6) % 360
+        task.wait(0.03)
+    end
+end)
+
+-- BẢNG MENU CHÍNH (MAIN)
 local Main = Instance.new("Frame", ScreenGui)
 Main.Size = UDim2.new(0, 420, 0, 260)
 Main.Position = UDim2.new(0.5, -210, 0.2, 0)
@@ -37,7 +71,14 @@ local Stroke = Instance.new("UIStroke", Main)
 Stroke.Color = Color3.fromRGB(255, 215, 0)
 Stroke.Thickness = 2
 
--- Kéo thả UI
+-- Sự kiện click vào nút Toggle để Ẩn / Hiện Bảng Menu
+local uiVisible = true
+ToggleBtn.MouseButton1Click:Connect(function()
+    uiVisible = not uiVisible
+    Main.Visible = uiVisible
+end)
+
+-- Kéo thả UI chính
 local dragging, dragStart, startPos
 Main.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -169,6 +210,11 @@ local function setLag(amount)
             sethiddenproperty(settings():GetService("NetworkSettings"), "IncomingReplicationLag", amount)
         end)
     end
+    if setfflag then
+        pcall(function()
+            setfflag("TaskSchedulerMaxStepsPerSec", amount > 0 and "10" or "60")
+        end)
+    end
 end
 
 -- TRANG 2: DỊCH CHUYỂN
@@ -265,7 +311,7 @@ Info.TextXAlignment = Enum.TextXAlignment.Left
 Info.TextYAlignment = Enum.TextYAlignment.Top
 
 local SECURE_TITLE = "HOANGHAI HUB - FISCH"
-local SECURE_INFO = "Tác giả: HOANGHAI\n- Tích hợp One-Hit Kill & Auto Mini Game.\n- Chúc các bạn chơi game vui vẻ!"
+local SECURE_INFO = "Tác giả: HOANGHAI\n- Tích hợp Toggle (Nút H xoay tròn) & Auto MiniGame Siêu Tốc.\n- Chúc các bạn chơi game vui vẻ!"
 Info.Text = SECURE_INFO
 
 task.spawn(function()
@@ -347,7 +393,8 @@ end
 
 local CUSTOM_MERCHANT_POS = Vector3.new(1264.13, 27.42, -353.30) 
 
-local function solveArrows()
+-- HÀM MINI GAME TÌM MŨI TÊN & KÝ TỰ TAY CẦM SIÊU TỐC (0.0005S)
+local function solveMiniGameFast()
     local inset = GuiService:GetGuiInset()
     for _, obj in pairs(PlayerGui:GetDescendants()) do
         if obj.Visible and (obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("ImageLabel") or obj:IsA("ImageButton")) then
@@ -355,9 +402,10 @@ local function solveArrows()
             local t = (obj:IsA("TextLabel") or obj:IsA("TextButton")) and string.lower(obj.Text) or ""
             local img = (obj:IsA("ImageLabel") or obj:IsA("ImageButton")) and string.lower(obj.Image) or ""
             
-            if n:find("arrow") or n:find("direction") or n:find("pointer") or 
+            if n:find("arrow") or n:find("direction") or n:find("pointer") or n:find("prompt") or n:find("button") or n:find("minigame") or
                t:find("▲") or t:find("▼") or t:find("◄") or t:find("►") or t:find("↑") or t:find("↓") or t:find("←") or t:find("→") or 
-               img:find("arrow") or img:find("pointer") then
+               (#t == 1 and t:match("[a-z0-9]")) or 
+               img:find("arrow") or img:find("pointer") or img:find("button") then
                 
                 local pos, sz = obj.AbsolutePosition, obj.AbsoluteSize
                 if sz.X > 0 and sz.Y > 0 then
@@ -365,6 +413,7 @@ local function solveArrows()
                     local cy = pos.Y + sz.Y / 2 + inset.Y
                     
                     VirtualInputManager:SendMouseButtonEvent(cx, cy, 0, true, game, 1)
+                    task.wait(0.0005)
                     VirtualInputManager:SendMouseButtonEvent(cx, cy, 0, false, game, 1)
                     return true
                 end
@@ -412,29 +461,7 @@ local function clickBtn(keys)
     return false
 end
 
---// ============================================================
---// AUTO MINI GAME (W A D)
---// ============================================================
-local function K(key, duration)
-    pcall(function()
-        VirtualInputManager:SendKeyEvent(true, key, false, game)
-        task.wait(duration)
-        VirtualInputManager:SendKeyEvent(false, key, false, game)
-    end)
-end
-
-task.spawn(function()
-    while true do
-        task.wait(0.03)
-        if isRunning then
-            K(Enum.KeyCode.W, 0.005)
-            K(Enum.KeyCode.A, 0.005)
-            K(Enum.KeyCode.D, 0.005)
-        end
-    end
-end)
-
--- VÒNG LẶP CÂU CHÍNH & KHÓA CHÂN
+-- VÒNG LẶP CÂU CHÍNH, KHÓA CHÂN & CHỜ CÁ TĂNG +1 RỒI NGHỈ 5S
 task.spawn(function()
     while task.wait(0.4) do
         if not isRunning then
@@ -524,7 +551,7 @@ task.spawn(function()
                     setLag(0)
                 end
                 
-                -- Khóa chân tại bãi câu (Anchored = true đến khi dừng hoặc đi bán cá)
+                -- Khóa chân tại bãi câu (Anchored = true)
                 root.CFrame = LockCFrame
                 root.Anchored = true
                 hum.WalkSpeed = 0
@@ -544,6 +571,20 @@ task.spawn(function()
 
                 if isHoldingRod then
                     local vp = Workspace.CurrentCamera.ViewportSize
+                    
+                    -- Spam ZXCV khi câu
+                    local spam = true
+                    task.spawn(function()
+                        while spam and isRunning do
+                            for _, k in ipairs({Enum.KeyCode.Z, Enum.KeyCode.X, Enum.KeyCode.C, Enum.KeyCode.V}) do
+                                if not spam or not isRunning then break end
+                                VirtualInputManager:SendKeyEvent(true, k, false, game)
+                                task.wait(0.02)
+                                VirtualInputManager:SendKeyEvent(false, k, false, game)
+                            end
+                            task.wait(0.05)
+                        end
+                    end)
 
                     Status.Text = "THẢ CẦN & XẢ SKILL..."
                     pcall(function() activeTool:Activate() end)
@@ -557,15 +598,15 @@ task.spawn(function()
                     local initialFish = getFish()
                     local aStart = tick()
                     
-                    -- Hoạt động đến khi cá trong kho cộng thêm 1 hoặc hết giờ 60s
                     while tick() - aStart < 60 and isRunning and getFish() <= initialFish do 
-                        solveArrows()
+                        solveMiniGameFast()
                         if isOneHoldOn then
                             triggerOneHit()
                         end
-                        task.wait()
+                        task.wait(0.01)
                     end
 
+                    spam = false
                     if isOneHoldOn then setLag(0) end
 
                     VirtualInputManager:SendMouseButtonEvent(vp.X/2, vp.Y/2, 0, true, game, 1)
@@ -573,8 +614,8 @@ task.spawn(function()
                     VirtualInputManager:SendMouseButtonEvent(vp.X/2, vp.Y/2, 0, false, game, 1)
                     task.wait(0.5)
 
-                    -- Đã bắt được cá (+1), ngừng khoảng 5 giây trước khi vào vòng lặp câu tiếp hoặc đi bán
-                    Status.Text = "ĐÃ BẮT ĐƯỢC CÁ - TẠM DỪNG 5 GIÂY..."
+                    -- Đã bắt được cá (+1), tạm dừng chính xác 5 giây
+                    Status.Text = "ĐÃ CỘNG +1 CÁ - TẠM DỪNG 5 GIÂY..."
                     task.wait(5.0)
                 else
                     Status.Text = "HÃY ĐẶT CẦN CÂU VÀO Ô SỐ 1!"

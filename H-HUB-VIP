@@ -1,5 +1,5 @@
 -- ====================================================
--- HOANGHAI HUB - FISCH (FIX TARGET CHUẨN NPC BÁN CÁ)
+-- HOANGHAI HUB - FISCH (FIX LỖI MẤT MENU & TARGET NPC)
 -- ====================================================
 local Players = game:GetService("Players")
 local VirtualInputManager = game:GetService("VirtualInputManager")
@@ -12,11 +12,10 @@ local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
--- 🛡️ Chống trùng lặp UI
-local SECURE_ID = "HOANGHAI_FISCH_PUBLIC_V5"
+-- 🛡️ Chống trùng lặp UI (Đã sửa tên định danh để không bị xung đột)
+local SECURE_ID = "HOANGHAI_FISCH_PUBLIC_V6"
 if getgenv()[SECURE_ID] then
     pcall(function() PlayerGui.HHubUI:Destroy() end)
-    return
 end
 getgenv()[SECURE_ID] = true
 
@@ -50,7 +49,7 @@ GoldStrokeGrad.Color = ColorSequence.new({
     ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 165, 0))
 })
 task.spawn(function()
-    while true do
+    while ScreenGui.Parent do
         GoldStrokeGrad.Rotation = (GoldStrokeGrad.Rotation + 6) % 360
         task.wait(0.05)
     end
@@ -73,7 +72,7 @@ HGrad.Color = ColorSequence.new({
     ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 180, 0))
 })
 task.spawn(function()
-    while true do
+    while ScreenGui.Parent do
         HGrad.Offset = Vector2.new(-1, 0)
         local tw = TweenService:Create(HGrad, TweenInfo.new(1.2, Enum.EasingStyle.Linear), {Offset = Vector2.new(1, 0)})
         tw:Play(); tw.Completed:Wait()
@@ -99,7 +98,7 @@ MainStrokeGrad.Color = ColorSequence.new({
     ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 165, 0))
 })
 task.spawn(function()
-    while true do
+    while ScreenGui.Parent do
         MainStrokeGrad.Rotation = (MainStrokeGrad.Rotation + 5) % 360
         task.wait(0.05)
     end
@@ -156,7 +155,7 @@ Grad.Color = ColorSequence.new({
 })
 Grad.Rotation = 45
 task.spawn(function()
-    while true do
+    while ScreenGui.Parent do
         Grad.Offset = Vector2.new(-1, 0)
         local t = TweenService:Create(Grad, TweenInfo.new(1.2, Enum.EasingStyle.Linear), {Offset = Vector2.new(1, 0)})
         t:Play(); t.Completed:Wait(); task.wait(2)
@@ -361,11 +360,12 @@ Info.TextXAlignment = Enum.TextXAlignment.Left
 Info.TextYAlignment = Enum.TextYAlignment.Top
 
 local SECURE_TITLE = "HOANGHAI HUB - FISCH"
-local SECURE_INFO = "Tác giả: HOANGHAI\n- Target chuẩn xác NPC bán cá theo tên.\n- Không bị nhầm lẫn với các NPC khác."
+local SECURE_INFO = "Tác giả: HOANGHAI\n- Đã fix lỗi mất menu UI.\n- Target chuẩn xác NPC bán cá."
 Info.Text = SECURE_INFO
 
 task.spawn(function()
-    while task.wait(0.5) do
+    while ScreenGui.Parent do
+        task.wait(0.5)
         pcall(function()
             if Title.Text ~= SECURE_TITLE then Title.Text = SECURE_TITLE end
             if not Info.Text:find("HOANGHAI") then Info.Text = SECURE_INFO end
@@ -443,7 +443,8 @@ end
 
 -- VÒNG LẶP CẬP NHẬT UI HIỂN THỊ SỐ CÁ
 task.spawn(function()
-    while task.wait(1) do
+    while ScreenGui.Parent do
+        task.wait(1)
         pcall(function()
             local currentFish = getFish()
             FishCountLabel.Text = "Số cá trong túi: " .. currentFish .. " / " .. maxFishCapacity
@@ -518,7 +519,8 @@ local function clickBtn(keys)
 end
 
 task.spawn(function()
-    while task.wait(0.4) do
+    while ScreenGui.Parent do
+        task.wait(0.4)
         if not isRunning then
             pcall(function()
                 if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
@@ -560,7 +562,6 @@ task.spawn(function()
                     root.CFrame = CFrame.new(CUSTOM_MERCHANT_POS)
                     task.wait(0.5)
 
-                    -- TÌM CHÍNH XÁC NPC BÁN CÁ DỰA TRÊN TÊN (FISH MERCHANT / MERCHANT)
                     local targetPrompt = nil
                     local targetPart = nil
                     
@@ -569,7 +570,6 @@ task.spawn(function()
                             local parent = obj.Parent
                             if parent then
                                 local parentName = string.lower(parent.Name)
-                                -- Lọc chuẩn theo tên thương nhân cá trong Fisch
                                 if parentName:find("merchant") or parentName:find("fish") or parentName:find("sell") then
                                     if (parent.Position - CUSTOM_MERCHANT_POS).Magnitude < 35 then
                                         targetPrompt = obj
@@ -581,7 +581,6 @@ task.spawn(function()
                         end
                     end
 
-                    -- Nếu không tìm thấy bằng tên, lấy ProximityPrompt gần nhất trong khu vực bán cá
                     if not targetPrompt then
                         for _, obj in pairs(Workspace:GetDescendants()) do
                             if obj:IsA("ProximityPrompt") then
@@ -668,7 +667,7 @@ task.spawn(function()
                     
                     local spam = true
                     task.spawn(function()
-                        while spam and isRunning do
+                        while spam and isRunning and ScreenGui.Parent do
                             for _, k in ipairs({Enum.KeyCode.Z, Enum.KeyCode.X, Enum.KeyCode.C, Enum.KeyCode.V}) do
                                 if not spam or not isRunning then break end
                                 VirtualInputManager:SendKeyEvent(true, k, false, game)

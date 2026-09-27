@@ -1,5 +1,5 @@
 local Players = game:GetService("Players")
-local VirtualInputManager = game:GetService("VirtualInputManager")
+local VirtualInputManager = Service or game:GetService("VirtualInputManager")
 local TweenService = game:GetService("TweenService")
 local Workspace = game:GetService("Workspace")
 local GuiService = game:GetService("GuiService")
@@ -161,30 +161,21 @@ Info.TextSize = 12
 Info.TextXAlignment = Enum.TextXAlignment.Left
 Info.TextYAlignment = Enum.TextYAlignment.Top
 
--- ==========================================
--- BẢO VỆ TÊN SCRIPT VÀ TÊN TÁC GIẢ (ANTI-EDIT CREDITS)
--- ==========================================
+-- BẢO VỆ TÊN SCRIPT & TÁC GIẢ
 local SECURE_TITLE = "HOANGHAI HUB - AUTO FISH"
-local SECURE_INFO = "Tac gia: HOANGHAI\n- Tu dong nhan dien NPC.\n- Tu dong x xa skill & an E.\n- Gioi han bay trong dao."
+local SECURE_INFO = "Tac gia: HOANGHAI\n- Tu dong nhan dien NPC.\n- Tu dong x xa skill & an E.\n- Gioi han bay trong dao.\n- Da sua loi tim NPC."
 
 Info.Text = SECURE_INFO
 
 task.spawn(function()
     while task.wait(0.5) do
         pcall(function()
-            if Title.Text ~= SECURE_TITLE then
-                Title.Text = SECURE_TITLE
-            end
-            if Info.Text ~= SECURE_INFO then
-                Info.Text = SECURE_INFO
-            end
-            if ScreenGui.Name ~= "HHubUI" then
-                ScreenGui.Name = "HHubUI"
-            end
+            if Title.Text ~= SECURE_TITLE then Title.Text = SECURE_TITLE end
+            if Info.Text ~= SECURE_INFO then Info.Text = SECURE_INFO end
+            if ScreenGui.Name ~= "HHubUI" then ScreenGui.Name = "HHubUI" end
         end)
     end
 end)
--- ==========================================
 
 Tab1.MouseButton1Click:Connect(function()
     P1.Visible = true; P2.Visible = false
@@ -239,23 +230,42 @@ local function getFish()
     return count
 end
 
-local function isNPC(p)
-    if not p:IsA("ProximityPrompt") then return false end
-    local txt = string.lower((p.Parent and p.Parent.Name or "") .. " " .. p.ActionText .. " " .. p.ObjectText)
-    if txt:find("rod") or txt:find("cần") or txt:find("bait") or txt:find("mồi") or txt:find("equip") or txt:find("sit") or txt:find("door") or txt:find("chest") then return false end
-    if txt:find("sell") or txt:find("bán") or txt:find("merchant") or txt:find("shop") or txt:find("fish") or txt:find("cá") or txt:find("trader") or txt:find("buyer") then return true end
-    return false
-end
-
+-- CẢI TIẾN HÀM TÌM NPC (HỖ TRỢ NHIỀU LOẠI GAME KHÁC NHAU)
 local function getNPC(pos)
-    local target, dist = nil, 2500
-    for _, p in pairs(Workspace:GetDescendants()) do
-        if isNPC(p) then
-            local par = p.Parent
-            local pPos = par:IsA("BasePart") and par.Position or (par:IsA("Model") and (par.PrimaryPart and par.PrimaryPart.Position or par:GetPivot().Position))
+    local target, dist = nil, 99999
+    for _, obj in pairs(Workspace:GetDescendants()) do
+        local nameLower = string.lower(obj.Name)
+        local isTargetNPC = false
+        local pPos = nil
+
+        -- Nhận diện dựa trên tên NPC / Shop / Người bán cá hoặc ProximityPrompt
+        if nameLower:find("sell") or nameLower:find("merchant") or nameLower:find("shop") or nameLower:find("trader") or nameLower:find("fish") or nameLower:find("cá") or nameLower:find("buyer") then
+            isTargetNPC = true
+        end
+
+        if obj:IsA("ProximityPrompt") then
+            local txt = string.lower((obj.Parent and obj.Parent.Name or "") .. " " .. obj.ActionText .. " " .. obj.ObjectText)
+            if not (txt:find("rod") or txt:find("cần") or txt:find("bait") or txt:find("mồi") or txt:find("equip") or txt:find("sit")) then
+                if txt:find("sell") or txt:find("bán") or txt:find("merchant") or txt:find("shop") or txt:find("fish") or txt:find("cá") then
+                    isTargetNPC = true
+                    obj = obj.Parent
+                end
+            end
+        end
+
+        if isTargetNPC then
+            if obj:IsA("BasePart") then
+                pPos = obj.Position
+            elseif obj:IsA("Model") then
+                pPos = (obj.PrimaryPart and obj.PrimaryPart.Position) or obj:GetPivot().Position
+            end
+
             if pPos then
                 local d = (pPos - pos).Magnitude
-                if d < dist then dist = d; target = pPos end
+                if d < dist then
+                    dist = d
+                    target = pPos
+                end
             end
         end
     end
@@ -331,7 +341,11 @@ task.spawn(function()
                     task.wait(0.2)
 
                     local tPos = getNPC(root.Position)
-                    if not tPos then Status.Text = "KHONG THAY NPC!"; task.wait(2); return end
+                    if not tPos then 
+                        Status.Text = "KHONG THAY NPC! THU LAI SAU..."
+                        task.wait(2)
+                        return 
+                    end
 
                     Status.Text = "BAY TOI NPC..."
                     hum.WalkSpeed = 16; root.Anchored = false
@@ -352,10 +366,8 @@ task.spawn(function()
                         task.wait(0.5)
 
                         for _, p in pairs(Workspace:GetDescendants()) do
-                            if isNPC(p) then
-                                local par = p.Parent
-                                local pPos = par:IsA("BasePart") and par.Position or (par:IsA("Model") and par:GetPivot().Position)
-                                if pPos and (pPos - root.Position).Magnitude < 15 then pcall(function() fireproximityprompt(p) end) end
+                            if p:IsA("ProximityPrompt") then
+                                pcall(function() fireproximityprompt(p) end)
                             end
                         end
                         task.wait(0.5)

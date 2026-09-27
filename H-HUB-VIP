@@ -1,5 +1,5 @@
 -- ====================================================
--- HOANGHAI HUB - FISCH (BẢN VIỆT HÓA + UPDATE KHO CÁ + QUAY MẶT NPC)
+-- HOANGHAI HUB - FISCH (FIX TARGET CHUẨN NPC BÁN CÁ)
 -- ====================================================
 local Players = game:GetService("Players")
 local VirtualInputManager = game:GetService("VirtualInputManager")
@@ -13,7 +13,7 @@ local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
 -- 🛡️ Chống trùng lặp UI
-local SECURE_ID = "HOANGHAI_FISCH_PUBLIC_V3"
+local SECURE_ID = "HOANGHAI_FISCH_PUBLIC_V5"
 if getgenv()[SECURE_ID] then
     pcall(function() PlayerGui.HHubUI:Destroy() end)
     return
@@ -361,7 +361,7 @@ Info.TextXAlignment = Enum.TextXAlignment.Left
 Info.TextYAlignment = Enum.TextYAlignment.Top
 
 local SECURE_TITLE = "HOANGHAI HUB - FISCH"
-local SECURE_INFO = "Tác giả: HOANGHAI\n- Tự quay mặt vào NPC.\n- Đã sửa lỗi kẹt ảnh cá."
+local SECURE_INFO = "Tác giả: HOANGHAI\n- Target chuẩn xác NPC bán cá theo tên.\n- Không bị nhầm lẫn với các NPC khác."
 Info.Text = SECURE_INFO
 
 task.spawn(function()
@@ -542,7 +542,6 @@ task.spawn(function()
                     Status.Text = "TÚI ĐÃ ĐẠT MỐC -> ĐANG TẮT ẢNH CÁ..."
                     local vp = Workspace.CurrentCamera.ViewportSize
                     
-                    -- NHẤP 2 LẦN ĐỂ ĐẢM BẢO TẮT ẢNH CÁ
                     for _ = 1, 2 do
                         VirtualInputManager:SendMouseButtonEvent(vp.X/2, vp.Y/2, 0, true, game, 1)
                         task.wait(0.05)
@@ -559,23 +558,47 @@ task.spawn(function()
                     end
 
                     root.CFrame = CFrame.new(CUSTOM_MERCHANT_POS)
-                    task.wait(0.2)
+                    task.wait(0.5)
 
-                    -- TÌM VÀ QUAY MẶT VÀO NPC BÁN CÁ
+                    -- TÌM CHÍNH XÁC NPC BÁN CÁ DỰA TRÊN TÊN (FISH MERCHANT / MERCHANT)
+                    local targetPrompt = nil
                     local targetPart = nil
-                    for _, p in pairs(Workspace:GetDescendants()) do
-                        if p:IsA("ProximityPrompt") then
-                            local part = p.Parent
-                            if part and part:IsA("BasePart") then
-                                if (part.Position - root.Position).Magnitude < 15 then
-                                    targetPart = part
-                                    break
+                    
+                    for _, obj in pairs(Workspace:GetDescendants()) do
+                        if obj:IsA("ProximityPrompt") then
+                            local parent = obj.Parent
+                            if parent then
+                                local parentName = string.lower(parent.Name)
+                                -- Lọc chuẩn theo tên thương nhân cá trong Fisch
+                                if parentName:find("merchant") or parentName:find("fish") or parentName:find("sell") then
+                                    if (parent.Position - CUSTOM_MERCHANT_POS).Magnitude < 35 then
+                                        targetPrompt = obj
+                                        targetPart = parent
+                                        break
+                                    end
+                                end
+                            end
+                        end
+                    end
+
+                    -- Nếu không tìm thấy bằng tên, lấy ProximityPrompt gần nhất trong khu vực bán cá
+                    if not targetPrompt then
+                        for _, obj in pairs(Workspace:GetDescendants()) do
+                            if obj:IsA("ProximityPrompt") then
+                                local parent = obj.Parent
+                                if parent and parent:IsA("BasePart") then
+                                    if (parent.Position - CUSTOM_MERCHANT_POS).Magnitude < 20 then
+                                        targetPrompt = obj
+                                        targetPart = parent
+                                        break
+                                    end
                                 end
                             end
                         end
                     end
 
                     if targetPart then
+                        root.CFrame = CFrame.new(targetPart.Position + Vector3.new(0, 1.0, 0))
                         local lookPos = Vector3.new(targetPart.Position.X, root.Position.Y, targetPart.Position.Z)
                         root.CFrame = CFrame.lookAt(root.Position, lookPos)
                         task.wait(0.2)
@@ -585,17 +608,16 @@ task.spawn(function()
 
                     repeat
                         Status.Text = "ĐANG BÁN CÁ (CÒN " .. tostring(fCount) .. " CON)..."
+                        
+                        if targetPrompt then
+                            pcall(function() fireproximityprompt(targetPrompt) end)
+                        end
+                        
                         VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
                         task.wait(0.1)
                         VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
                         task.wait(0.5)
 
-                        for _, p in pairs(Workspace:GetDescendants()) do
-                            if p:IsA("ProximityPrompt") then
-                                pcall(function() fireproximityprompt(p) end)
-                            end
-                        end
-                        task.wait(0.5)
                         clickBtn({"bán", "sell", "confirm", "đồng ý"})
                         task.wait(1.5)
                         fCount = getFish()

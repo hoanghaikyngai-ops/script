@@ -8,7 +8,6 @@ local Workspace = game:GetService("Workspace")
 local GuiService = game:GetService("GuiService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
-local Stats = game:GetService("Stats")
 
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
@@ -205,31 +204,17 @@ local function flyToPos(targetPos)
         local char = LocalPlayer.Character
         local root = char and char:FindFirstChild("HumanoidRootPart")
         if root then
-            -- 1. Bật tính năng lag để ngắt kết nối
-            Status.Text = "ĐANG CHỜ HIỆN BẢNG KHÔNG CÓ MẠNG..."
+            -- 1. Bật ngắt mạng và chờ hiện bảng mất kết nối
+            Status.Text = "ĐANG NGẮT MẠNG (ĐỢI HIỆN BẢNG)..."
             setLag(99999)
-            
-            -- 2. Chờ cho đến khi Roblox hiện bảng mất mạng (Kiểm tra qua Ping tăng cao / Mất kết nối hoặc đợi đủ thời gian ổn định bảng hiện lên)
-            local waitTime = 0
-            while waitTime < 10 do
-                local ping = 0
-                pcall(function()
-                    ping = Stats.Network.ServerStatsItem["Data Ping"]:GetValue()
-                end)
-                -- Khi ping vọt lên cao nghĩa là kết nối đã bị đóng băng/mất mạng thành công
-                if ping > 1000 or waitTime >= 6.0 then
-                    break
-                end
-                task.wait(0.5)
-                waitTime = waitTime + 0.5
-            end
+            task.wait(3.5)
 
-            Status.Text = "ĐÃ MẤT MẠNG - ĐANG BAY TỐC ĐỘ 200..."
+            Status.Text = "ĐÃ MẤT MẠNG - ĐANG BAY TỐC ĐỘ 700..."
             root.Anchored = true 
             local targetCFrame = CFrame.new(targetPos + Vector3.new(0, 5, 0))
             
             local dist = (root.Position - targetPos).Magnitude
-            local speed = 200 -- Tăng tốc độ bay lên 200
+            local speed = 700 -- Đẩy tốc độ bay lên 700
             local timeToTween = dist / speed
             
             local tw = TweenService:Create(root, TweenInfo.new(timeToTween, Enum.EasingStyle.Linear), {CFrame = targetCFrame})
@@ -239,10 +224,10 @@ local function flyToPos(targetPos)
             
             tw.Completed:Wait()
             
-            -- Đợi thêm một chút để đồng bộ
-            task.wait(1.5)
+            -- Đợi thêm một chút để ổn định vị trí ở đảo mới
+            task.wait(1.0)
             
-            -- 3. Bay đến nơi an toàn mới tắt lag (khôi phục lại mạng)
+            -- 2. Đến nơi an toàn mới tắt lag (khôi phục mạng)
             root.Anchored = false
             setLag(0)
             Status.Text = "ĐÃ ĐẾN NƠI & KHÔI PHỤC MẠNG!"
@@ -464,7 +449,8 @@ task.spawn(function()
                     local dist = (root.Position - CUSTOM_MERCHANT_POS).Magnitude
                     if dist > 3 then
                         setLag(99999)
-                        local tw = TweenService:Create(root, TweenInfo.new(dist/200, Enum.EasingStyle.Linear), {CFrame = CFrame.new(CUSTOM_MERCHANT_POS + Vector3.new(0, 3, 0))})
+                        task.wait(2.5)
+                        local tw = TweenService:Create(root, TweenInfo.new(dist/700, Enum.EasingStyle.Linear), {CFrame = CFrame.new(CUSTOM_MERCHANT_POS + Vector3.new(0, 3, 0))})
                         tw:Play(); tw.Completed:Wait()
                         setLag(0)
                     end
@@ -499,7 +485,8 @@ task.spawn(function()
                     local dBack = (root.Position - LockCFrame.Position).Magnitude
                     if dBack > 3 then
                         setLag(99999)
-                        local twB = TweenService:Create(root, TweenInfo.new(dBack/200, Enum.EasingStyle.Linear), {CFrame = LockCFrame})
+                        task.wait(2.5)
+                        local twB = TweenService:Create(root, TweenInfo.new(dBack/700, Enum.EasingStyle.Linear), {CFrame = LockCFrame})
                         twB:Play(); twB.Completed:Wait()
                         setLag(0)
                     end
@@ -511,8 +498,9 @@ task.spawn(function()
                 local distToLock = (root.Position - LockCFrame.Position).Magnitude
                 if distToLock > 3 then
                     setLag(99999)
+                    task.wait(2.5)
                     root.Anchored = true
-                    local twB = TweenService:Create(root, TweenInfo.new(dBack/200, Enum.EasingStyle.Linear), {CFrame = LockCFrame})
+                    local twB = TweenService:Create(root, TweenInfo.new(dBack/700, Enum.EasingStyle.Linear), {CFrame = LockCFrame})
                     twB:Play(); twB.Completed:Wait()
                     root.Anchored = false
                     setLag(0)

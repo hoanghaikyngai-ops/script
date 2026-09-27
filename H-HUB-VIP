@@ -26,7 +26,7 @@ local Stroke = Instance.new("UIStroke", Main)
 Stroke.Color = Color3.fromRGB(255, 215, 0)
 Stroke.Thickness = 2
 
--- Kéo thả UI và chống dính chuột
+-- Kéo thả UI
 local dragging, dragStart, startPos
 Main.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -56,7 +56,7 @@ local Title = Instance.new("TextLabel", TopBar)
 Title.Size = UDim2.new(1, -15, 1, 0)
 Title.Position = UDim2.new(0, 10, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "HOANGHAI HUB - FISCH (FIX BUG)"
+Title.Text = "HOANGHAI HUB - FISCH (ONE-HIT KILL)"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 13
@@ -115,7 +115,6 @@ PageC.Size = UDim2.new(1, -115, 1, -40)
 PageC.Position = UDim2.new(0, 112, 0, 38)
 PageC.BackgroundTransparency = 1
 
--- TRANG 1: CÀY CUỘC
 local P1 = Instance.new("Frame", PageC)
 P1.Size = UDim2.new(1, 0, 1, 0)
 P1.BackgroundTransparency = 1
@@ -147,10 +146,9 @@ KillFishToggle.BackgroundColor3 = Color3.fromRGB(0, 140, 255)
 KillFishToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
 KillFishToggle.Font = Enum.Font.GothamBold
 KillFishToggle.TextSize = 11
-KillFishToggle.Text = "LAG KILL CÁ (MAX): BẬT"
+KillFishToggle.Text = "ONE-HIT KILL: BẬT"
 Instance.new("UICorner", KillFishToggle).CornerRadius = UDim.new(0, 6)
 
--- HÀM ÉP LAG CHUYÊN SÂU HỖ TRỢ MỌI EXECUTOR
 local function setLag(amount)
     pcall(function()
         settings():GetService("NetworkSettings"):SetIncomingReplicationLag(amount)
@@ -186,17 +184,34 @@ local Islands = {
     {Name = "Volcano Island", Pos = Vector3.new(1807.50, 9.17, 1073.44)}
 }
 
--- CẬP NHẬT HÀM DỊCH CHUYỂN (SỬ DỤNG PIVOTTO ĐỂ CHUẨN XÁC)
-local function tpToPos(targetPos)
+local isRunning = true
+local isOneHitOn = true
+local LockCFrame = nil
+
+local function flyToPos(targetPos)
     pcall(function()
         local char = LocalPlayer.Character
-        if char then
-            -- Bắt buộc tắt lag trước khi dịch chuyển để server nhận tín hiệu
+        local root = char and char:FindFirstChild("HumanoidRootPart")
+        if root then
+            setLag(99999)
+            root.Anchored = true 
+            local targetCFrame = CFrame.new(targetPos + Vector3.new(0, 5, 0))
+            
+            local dist = (root.Position - targetPos).Magnitude
+            local speed = 120 
+            local timeToTween = dist / speed
+            
+            local tw = TweenService:Create(root, TweenInfo.new(timeToTween, Enum.EasingStyle.Linear), {CFrame = targetCFrame})
+            tw:Play()
+            
+            if isRunning then LockCFrame = targetCFrame end
+            
+            Status.Text = "DANG BAY TOC DO CAO..."
+            tw.Completed:Wait()
+            
+            root.Anchored = false
             setLag(0)
-            task.wait(0.1)
-            -- Sử dụng PivotTo thay vì CFrame để chống lỗi kẹt map
-            char:PivotTo(CFrame.new(targetPos + Vector3.new(0, 5, 0)))
-            task.wait(0.5)
+            Status.Text = "DA BAY TOI NOI!"
         end
     end)
 end
@@ -208,12 +223,14 @@ for i, island in ipairs(Islands) do
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     btn.Font = Enum.Font.GothamSemibold
     btn.TextSize = 11
-    btn.Text = "Dịch chuyển tới: " .. island.Name
+    btn.Text = "Bay tới: " .. island.Name
     btn.LayoutOrder = i
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
     
     btn.MouseButton1Click:Connect(function()
-        tpToPos(island.Pos)
+        task.spawn(function()
+            flyToPos(island.Pos)
+        end)
     end)
 end
 
@@ -233,7 +250,7 @@ Info.TextXAlignment = Enum.TextXAlignment.Left
 Info.TextYAlignment = Enum.TextYAlignment.Top
 
 local SECURE_TITLE = "HOANGHAI HUB - FISCH"
-local SECURE_INFO = "Tac gia: HOANGHAI\n- Cập nhật Fix lỗi TP và Lag mạng.\n- Hỗ trợ ẩn tính năng sethiddenproperty.\n- Treo liên tục tới khi đầy túi."
+local SECURE_INFO = "Tac gia: HOANGHAI\n- Tích hợp One-Hit Kill (trừ máu cá về 0 lập tức).\n- Không bấm phím 1 nếu đã cầm cần."
 Info.Text = SECURE_INFO
 
 task.spawn(function()
@@ -260,16 +277,14 @@ Tab3.MouseButton1Click:Connect(function()
 end)
 Tab1.TextColor3 = Color3.fromRGB(255, 215, 0)
 
-local isRunning = true
-local isKillFishLagOn = true
-local LockCFrame = nil
-
 Toggle.MouseButton1Click:Connect(function()
     isRunning = not isRunning
     if isRunning then
         Toggle.Text = "AUTO: BAT"
         TweenService:Create(Toggle, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(0, 170, 0)}):Play()
         Status.Text = "DA BAT!"
+        local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if root then LockCFrame = root.CFrame end
     else
         Toggle.Text = "AUTO: TAT"
         TweenService:Create(Toggle, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(170, 0, 0)}):Play()
@@ -286,16 +301,17 @@ Toggle.MouseButton1Click:Connect(function()
 end)
 
 KillFishToggle.MouseButton1Click:Connect(function()
-    isKillFishLagOn = not isKillFishLagOn
-    if isKillFishLagOn then
-        KillFishToggle.Text = "LAG KILL CÁ (MAX): BẬT"
+    isOneHitOn = not isOneHitOn
+    if isOneHitOn then
+        KillFishToggle.Text = "ONE-HIT KILL: BẬT"
         TweenService:Create(KillFishToggle, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(0, 140, 255)}):Play()
     else
-        KillFishToggle.Text = "LAG KILL CÁ: TẮT"
+        KillFishToggle.Text = "ONE-HIT KILL: TẮT"
         TweenService:Create(KillFishToggle, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(120, 120, 120)}):Play()
     end
 end)
 
+-- HÀM ĐẾM CÁ CHUẨN XÁC
 local function getFish()
     local count = 0
     local function check(cont)
@@ -303,7 +319,7 @@ local function getFish()
             for _, i in ipairs(cont:GetChildren()) do
                 if i:IsA("Tool") then
                     local n = string.lower(i.Name)
-                    if not (n:find("rod") or n:find("cần") or n:find("bait") or n:find("mồi") or n:find("potion") or n:find("thuốc")) then
+                    if not (n:find("rod") or n:find("cần") or n:find("bait") or n:find("mồi") or n:find("potion") or n:find("thuốc") or n:find("license") or n:find("gps") or n:find("radar") or n:find("pass")) then
                         count = count + 1
                     end
                 end
@@ -316,10 +332,6 @@ local function getFish()
 end
 
 local CUSTOM_MERCHANT_POS = Vector3.new(1264.13, 27.42, -353.30) 
-
-local function getNPC(pos)
-    return CUSTOM_MERCHANT_POS
-end
 
 local function solveArrows()
     local inset = GuiService:GetGuiInset()
@@ -348,6 +360,25 @@ local function solveArrows()
     return false
 end
 
+-- HÀM HỦY DIỆT: ÉP MÁU/TIẾN TRÌNH CÂU VỀ 0 LẬP TỨC (ONE-HIT)
+local function triggerOneHit()
+    pcall(function()
+        for _, gui in pairs(PlayerGui:GetDescendants()) do
+            if gui.Visible and (gui:IsA("Frame") or gui:IsA("TextLabel")) then
+                local name = string.lower(gui.Name)
+                if name:find("progress") or name:find("bar") or name:find("fish") or name:find("health") or name:find("container") or name:find("minigame") then
+                    for _, child in pairs(gui:GetDescendants()) do
+                        if child:IsA("Frame") and (child.Size.X.Scale > 0 or child.Size.X.Offset > 0) then
+                            -- Ép chiều dài thanh máu/tiến trình về 0 (hoặc đầy cực đại để trigger kết thúc)
+                            child.Size = UDim2.new(0, 0, child.Size.Y.Scale, child.Size.Y.Offset)
+                        end
+                    end
+                end
+            end
+        end
+    end)
+end
+
 local function clickBtn(keys)
     local inset = GuiService:GetGuiInset()
     for _, obj in pairs(PlayerGui:GetDescendants()) do
@@ -371,9 +402,8 @@ end
 task.spawn(function()
     while task.wait(0.4) do
         if not isRunning then
-            LockCFrame = nil
             pcall(function()
-                if LocalPlayer.Character then
+                if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
                     LocalPlayer.Character.HumanoidRootPart.Anchored = false
                     LocalPlayer.Character.Humanoid.WalkSpeed = 16
                 end
@@ -396,21 +426,17 @@ task.spawn(function()
                     VirtualInputManager:SendMouseButtonEvent(vp.X/2, vp.Y/2, 0, false, game, 1)
                     task.wait(0.2)
 
-                    local tPos = getNPC(root.Position)
-
-                    Status.Text = "BAY TOI FISH MERCHANT..."
-                    hum.WalkSpeed = 16; root.Anchored = false
+                    hum.WalkSpeed = 16; root.Anchored = true
                     
-                    -- Hủy lag để di chuyển
-                    setLag(0)
-                    
-                    local dist = (root.Position - tPos).Magnitude
+                    local dist = (root.Position - CUSTOM_MERCHANT_POS).Magnitude
                     if dist > 3 then
-                        local tw = TweenService:Create(root, TweenInfo.new(dist/45, Enum.EasingStyle.Linear), {CFrame = CFrame.new(tPos + Vector3.new(0, 3, 0))})
+                        setLag(99999)
+                        local tw = TweenService:Create(root, TweenInfo.new(dist/120, Enum.EasingStyle.Linear), {CFrame = CFrame.new(CUSTOM_MERCHANT_POS + Vector3.new(0, 3, 0))})
                         tw:Play(); tw.Completed:Wait()
+                        setLag(0)
                     end
 
-                    char:PivotTo(CFrame.new(tPos))
+                    root.CFrame = CFrame.new(CUSTOM_MERCHANT_POS)
                     root.Anchored = true; hum.WalkSpeed = 0
 
                     repeat
@@ -435,26 +461,47 @@ task.spawn(function()
                     while tick() - cStart < 3 do clickBtn({"tạm biệt", "bye", "thoát", "close", "x"}); task.wait(0.5) end
 
                     Status.Text = "VE BAI CAU..."
-                    root.Anchored = false; hum.WalkSpeed = 16
+                    root.Anchored = true; hum.WalkSpeed = 16
                     
                     local dBack = (root.Position - LockCFrame.Position).Magnitude
                     if dBack > 3 then
-                        local twB = TweenService:Create(root, TweenInfo.new(dBack/45, Enum.EasingStyle.Linear), {CFrame = LockCFrame})
+                        setLag(99999)
+                        local twB = TweenService:Create(root, TweenInfo.new(dBack/120, Enum.EasingStyle.Linear), {CFrame = LockCFrame})
                         twB:Play(); twB.Completed:Wait()
+                        setLag(0)
                     end
+                    root.Anchored = false
                 end
 
                 if not isRunning then return end
 
-                char:PivotTo(LockCFrame)
+                local distToLock = (root.Position - LockCFrame.Position).Magnitude
+                if distToLock > 3 then
+                    setLag(99999)
+                    root.Anchored = true
+                    local twB = TweenService:Create(root, TweenInfo.new(dBack/120, Enum.EasingStyle.Linear), {CFrame = LockCFrame})
+                    twB:Play(); twB.Completed:Wait()
+                    root.Anchored = false
+                    setLag(0)
+                end
+                
+                root.CFrame = LockCFrame
                 root.Anchored = false; hum.WalkSpeed = 0
 
-                local bp = LocalPlayer:FindFirstChild("Backpack")
-                local tool = char:FindFirstChildOfClass("Tool") or (bp and bp:FindFirstChildOfClass("Tool"))
-                if tool and tool.Parent == bp then hum:EquipTool(tool); task.wait(0.5) end
+                -- CHỈ BẤM PHÍM 1 NẾU CHƯA CẦM CẦN TRÊN TAY
+                local activeTool = char and char:FindFirstChildOfClass("Tool")
+                local isHoldingRod = activeTool and (string.lower(activeTool.Name):find("rod") or string.lower(activeTool.Name):find("cần"))
 
-                tool = char:FindFirstChildOfClass("Tool")
-                if tool then
+                if not isHoldingRod then
+                    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.One, false, game)
+                    task.wait(0.05)
+                    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.One, false, game)
+                    task.wait(0.5)
+                    activeTool = char and char:FindFirstChildOfClass("Tool")
+                    isHoldingRod = activeTool and (string.lower(activeTool.Name):find("rod") or string.lower(activeTool.Name):find("cần"))
+                end
+
+                if isHoldingRod then
                     local vp = Workspace.CurrentCamera.ViewportSize
                     local spam = true
                     task.spawn(function()
@@ -470,33 +517,32 @@ task.spawn(function()
                     end)
 
                     Status.Text = "THA CAN & XA SKILL..."
-                    pcall(function() tool:Activate() end)
+                    pcall(function() activeTool:Activate() end)
                     VirtualInputManager:SendMouseButtonEvent(vp.X/2, vp.Y/2 - 80, 0, true, game, 1)
                     task.wait(2)
                     VirtualInputManager:SendMouseButtonEvent(vp.X/2, vp.Y/2 - 80, 0, false, game, 1)
                     spam = false
 
-                    Status.Text = "DANG QUET CLICK MŨI TÊN & KILL CÁ..."
-                    if isKillFishLagOn then
-                        setLag(99999)
-                    end
+                    Status.Text = "DANG DUNG ONE-HIT KILL..."
+                    if isOneHitOn then setLag(99999) end
 
                     local aStart = tick()
                     while tick() - aStart < 60 and isRunning and getFish() < 50 do 
                         solveArrows()
+                        if isOneHitOn then
+                            triggerOneHit() -- Ép máu cá về 0 liên tục cho đến khi dính cá
+                        end
                         task.wait()
                     end
 
-                    if isKillFishLagOn then
-                        setLag(0)
-                    end
+                    if isOneHitOn then setLag(0) end
 
                     VirtualInputManager:SendMouseButtonEvent(vp.X/2, vp.Y/2, 0, true, game, 1)
                     task.wait(0.05)
                     VirtualInputManager:SendMouseButtonEvent(vp.X/2, vp.Y/2, 0, false, game, 1)
                     task.wait(0.5)
                 else
-                    Status.Text = "CHUA CAM CAN!"
+                    Status.Text = "HÃY ĐẶT CẦN CÂU VÀO Ô SỐ 1!"
                     task.wait(1)
                 end
             end)

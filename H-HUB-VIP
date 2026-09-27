@@ -1,5 +1,5 @@
 -- ====================================================
--- HOANGHAI HUB - FISCH (FIX HOÀN CHỈNH & GIAO DIỆN CHUẨN)
+-- HOANGHAI HUB - FISCH (CÓ BẢNG ĐANG TẢI & DI DỜI UI GIAO DIỆN)
 -- ====================================================
 local Players = game:GetService("Players")
 local VirtualInputManager = game:GetService("VirtualInputManager")
@@ -16,16 +16,47 @@ local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 if PlayerGui:FindFirstChild("HHubUI") then
     pcall(function() PlayerGui.HHubUI:Destroy() end)
 end
+if PlayerGui:FindFirstChild("HHubLoadingUI") then
+    pcall(function() PlayerGui.HHubLoadingUI:Destroy() end)
+end
 
+-- ================= BẢNG ĐANG TẢI (LOADING SCREEN) =================
+local LoadingGui = Instance.new("ScreenGui")
+LoadingGui.Name = "HHubLoadingUI"
+LoadingGui.ResetOnSpawn = false
+LoadingGui.Parent = PlayerGui
+
+local LoadFrame = Instance.new("Frame", LoadingGui)
+LoadFrame.Size = UDim2.new(0, 280, 0, 70)
+LoadFrame.Position = UDim2.new(0.5, -140, 0.44, 0)
+LoadFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+LoadFrame.BorderSizePixel = 0
+Instance.new("UICorner", LoadFrame).CornerRadius = UDim.new(0, 8)
+
+local LoadStroke = Instance.new("UIStroke", LoadFrame)
+LoadStroke.Thickness = 2
+LoadStroke.Color = Color3.fromRGB(255, 215, 0)
+
+local LoadText = Instance.new("TextLabel", LoadFrame)
+LoadText.Size = UDim2.new(1, 0, 1, 0)
+LoadText.BackgroundTransparency = 1
+LoadText.Text = "HOANGHAI HUB ĐANG TẢI..."
+LoadText.TextColor3 = Color3.fromRGB(255, 215, 0)
+LoadText.Font = Enum.Font.GothamBold
+LoadText.TextSize = 13
+
+task.wait(1.2) -- Giả lập thời gian tải để hiển thị mượt mà
+
+-- ================= GIAO DIỆN CHÍNH (ĐÃ DỜI XUỐNG DƯỚI & SANG TRÁI) =================
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "HHubUI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = PlayerGui
 
--- NÚT TOGGLE (ĐÓNG/MỞ TAB)
+-- NÚT TOGGLE (ĐÓNG/MỞ TAB) - Đã dời sang góc trái dưới
 local ToggleBtn = Instance.new("TextButton", ScreenGui)
 ToggleBtn.Size = UDim2.new(0, 52, 0, 52)
-ToggleBtn.Position = UDim2.new(0, 20, 0, 120)
+ToggleBtn.Position = UDim2.new(0, 20, 0.7, 0)
 ToggleBtn.BackgroundTransparency = 1 
 ToggleBtn.Text = ""
 ToggleBtn.AutoButtonColor = false
@@ -62,10 +93,10 @@ StaticTextH.TextSize = 44
 StaticTextH.TextXAlignment = Enum.TextXAlignment.Center
 StaticTextH.TextYAlignment = Enum.TextYAlignment.Center
 
--- BẢNG MENU CHÍNH 
+-- BẢNG MENU CHÍNH - Đã dời xuống dưới và sang trái
 local Main = Instance.new("Frame", ScreenGui)
 Main.Size = UDim2.new(0, 420, 0, 260)
-Main.Position = UDim2.new(0.5, -210, 0.2, 0)
+Main.Position = UDim2.new(0.05, 0, 0.55, 0)
 Main.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
 Main.BorderSizePixel = 0
 Main.Active = true
@@ -85,6 +116,9 @@ task.spawn(function()
         task.wait(0.05)
     end
 end)
+
+-- Xóa bảng đang tải sau khi UI chính hiện lên
+pcall(function() LoadingGui:Destroy() end)
 
 local uiVisible = true
 ToggleBtn.MouseButton1Click:Connect(function()
@@ -341,7 +375,7 @@ Info.Font = Enum.Font.Gotham
 Info.TextSize = 12
 Info.TextXAlignment = Enum.TextXAlignment.Left
 Info.TextYAlignment = Enum.TextYAlignment.Top
-Info.Text = "Tác giả: HOANGHAI\n- Bản fix sạch sẽ, ổn định và mượt mà."
+Info.Text = "Tác giả: HOANGHAI\n- Bản fix sạch sẽ, có bảng tải & dời UI an toàn."
 
 Tab1.MouseButton1Click:Connect(function()
     P1.Visible = true; P2.Visible = false; P3.Visible = false

@@ -1,15 +1,298 @@
+-- ====================================================
+-- HOANGHAI HUB - FISCH (PUBLIC VERSION)
+-- ====================================================
+local Players = game:GetService("Players")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local TweenService = game:GetService("TweenService")
+local Workspace = game:GetService("Workspace")
+local GuiService = game:GetService("GuiService")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+
+-- 🛡️ Chống trùng lặp UI
+local SECURE_ID = "HOANGHAI_FISCH_PUBLIC_V1"
+if getgenv()[SECURE_ID] then
+    pcall(function() PlayerGui.HHubUI:Destroy() end)
+    return
+end
+getgenv()[SECURE_ID] = true
+
+if PlayerGui:FindFirstChild("HHubUI") then PlayerGui.HHubUI:Destroy() end
+
+local ScreenGui = Instance.new("ScreenGui", PlayerGui)
+ScreenGui.Name = "HHubUI"
+ScreenGui.ResetOnSpawn = false
+
+-- NÚT TOGGLE (ĐÓNG/MỞ TAB): HÌNH TRÒN RỖNG RUỘT, VIỀN ĐỎ + VIỀN VÀNG KIM LẤP LÁNH
+local ToggleBtn = Instance.new("TextButton", ScreenGui)
+ToggleBtn.Size = UDim2.new(0, 52, 0, 52)
+ToggleBtn.Position = UDim2.new(0, 20, 0, 120)
+ToggleBtn.BackgroundTransparency = 1 -- Rỗng ruột
+ToggleBtn.Text = ""
+ToggleBtn.AutoButtonColor = false
+ToggleBtn.Active = true
+ToggleBtn.Draggable = true
+Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1, 0)
+
+-- Lớp viền đỏ Sharingan bên ngoài
+local ToggleStrokeRed = Instance.new("UIStroke", ToggleBtn)
+ToggleStrokeRed.Color = Color3.fromRGB(255, 0, 0)
+ToggleStrokeRed.Thickness = 3
+
+-- Lớp viền vàng kim lấp lánh chạy quanh viền nút Toggle
+local ToggleStrokeGold = Instance.new("UIStroke", ToggleBtn)
+ToggleStrokeGold.Thickness = 1.5
+local GoldStrokeGrad = Instance.new("UIGradient", ToggleStrokeGold)
+GoldStrokeGrad.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 215, 0)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 200)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 165, 0))
+})
+task.spawn(function()
+    while true do
+        GoldStrokeGrad.Rotation = (GoldStrokeGrad.Rotation + 6) % 360
+        task.wait(0.05)
+    end
+end)
+
+-- Chữ H đứng yên màu vàng kim lấp lánh ở giữa nút Toggle (Size to: 44)
+local StaticTextH = Instance.new("TextLabel", ToggleBtn)
+StaticTextH.Size = UDim2.new(1, 0, 1, 0)
+StaticTextH.BackgroundTransparency = 1
+StaticTextH.Text = "H"
+StaticTextH.TextColor3 = Color3.fromRGB(255, 215, 0)
+StaticTextH.Font = Enum.Font.GothamBold
+StaticTextH.TextSize = 44
+StaticTextH.TextXAlignment = Enum.TextXAlignment.Center
+StaticTextH.TextYAlignment = Enum.TextYAlignment.Center
+
+local HGrad = Instance.new("UIGradient", StaticTextH)
+HGrad.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 180, 0)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 180)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 180, 0))
+})
+task.spawn(function()
+    while true do
+        HGrad.Offset = Vector2.new(-1, 0)
+        local tw = TweenService:Create(HGrad, TweenInfo.new(1.2, Enum.EasingStyle.Linear), {Offset = Vector2.new(1, 0)})
+        tw:Play(); tw.Completed:Wait()
+        task.wait(0.3)
+    end
+end)
+
+-- BẢNG MENU CHÍNH (MAIN) VỚI VIỀN VÀNG KIM LẤP LÁNH
+local Main = Instance.new("Frame", ScreenGui)
+Main.Size = UDim2.new(0, 420, 0, 260)
+Main.Position = UDim2.new(0.5, -210, 0.2, 0)
+Main.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+Main.BorderSizePixel = 0
+Main.Active = true
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 8)
+
+local MainStroke = Instance.new("UIStroke", Main)
+MainStroke.Thickness = 2
+local MainStrokeGrad = Instance.new("UIGradient", MainStroke)
+MainStrokeGrad.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 215, 0)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 200)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 165, 0))
+})
+task.spawn(function()
+    while true do
+        MainStrokeGrad.Rotation = (MainStrokeGrad.Rotation + 5) % 360
+        task.wait(0.05)
+    end
+end)
+
+local uiVisible = true
+ToggleBtn.MouseButton1Click:Connect(function()
+    uiVisible = not uiVisible
+    Main.Visible = uiVisible
+end)
+
+-- Kéo thả UI chính
+local dragging, dragStart, startPos
+Main.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true; dragStart = input.Position; startPos = Main.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then dragging = false end
+        end)
+    end
+end)
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragging = false end
+end)
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - dragStart
+        Main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
+
+local TopBar = Instance.new("Frame", Main)
+TopBar.Size = UDim2.new(1, 0, 0, 32)
+TopBar.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+TopBar.BorderSizePixel = 0
+Instance.new("UICorner", TopBar).CornerRadius = UDim.new(0, 8)
+
+local Title = Instance.new("TextLabel", TopBar)
+Title.Size = UDim2.new(1, -15, 1, 0)
+Title.Position = UDim2.new(0, 10, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "HOANGHAI HUB - FISCH"
+Title.TextColor3 = Color3.fromRGB(255, 215, 0)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 13
+Title.TextXAlignment = Enum.TextXAlignment.Left
+
+local Grad = Instance.new("UIGradient", Title)
+Grad.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 215, 0)),
+    ColorSequenceKeypoint.new(0.4, Color3.fromRGB(255, 215, 0)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 255)),
+    ColorSequenceKeypoint.new(0.6, Color3.fromRGB(255, 215, 0)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 215, 0))
+})
+Grad.Rotation = 45
+
+task.spawn(function()
+    while true do
+        Grad.Offset = Vector2.new(-1, 0)
+        local t = TweenService:Create(Grad, TweenInfo.new(1.2, Enum.EasingStyle.Linear), {Offset = Vector2.new(1, 0)})
+        t:Play(); t.Completed:Wait(); task.wait(2)
+    end
+end)
+
+local TabC = Instance.new("Frame", Main)
+TabC.Size = UDim2.new(0, 105, 1, -32)
+TabC.Position = UDim2.new(0, 0, 0, 32)
+TabC.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+TabC.BorderSizePixel = 0
+Instance.new("UICorner", TabC).CornerRadius = UDim.new(0, 8)
+
+local UIList = Instance.new("UIListLayout", TabC)
+UIList.SortOrder = Enum.SortOrder.LayoutOrder
+UIList.Padding = UDim.new(0, 5)
+UIList.HorizontalAlignment = Enum.HorizontalAlignment.Center
+Instance.new("UIPadding", TabC).PaddingTop = UDim.new(0, 8)
+
+local function mkTab(name, order)
+    local b = Instance.new("TextButton", TabC)
+    b.Size = UDim2.new(0, 90, 0, 28)
+    b.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+    b.Text = name
+    b.TextColor3 = Color3.fromRGB(200, 200, 200)
+    b.Font = Enum.Font.GothamSemibold
+    b.TextSize = 11
+    b.LayoutOrder = order
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 6)
+    return b
+end
+
+local Tab1 = mkTab("Cay Cuoc", 1)
+local Tab2 = mkTab("Dich Chuyen", 2)
+local Tab3 = mkTab("Thong Tin", 3)
+
+local PageC = Instance.new("Frame", Main)
+PageC.Size = UDim2.new(1, -115, 1, -40)
+PageC.Position = UDim2.new(0, 112, 0, 38)
+PageC.BackgroundTransparency = 1
+
+local P1 = Instance.new("Frame", PageC)
+P1.Size = UDim2.new(1, 0, 1, 0)
+P1.BackgroundTransparency = 1
+
+local Status = Instance.new("TextLabel", P1)
+Status.Size = UDim2.new(1, 0, 0, 32)
+Status.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+Status.TextColor3 = Color3.fromRGB(255, 215, 0)
+Status.Font = Enum.Font.GothamBold
+Status.TextSize = 11
+Status.TextWrapped = true
+Status.Text = "HOANGHAI HUB ĐÃ SẴN SÀNG!"
+Instance.new("UICorner", Status).CornerRadius = UDim.new(0, 6)
+
+local Toggle = Instance.new("TextButton", P1)
+Toggle.Size = UDim2.new(1, 0, 0, 32)
+Toggle.Position = UDim2.new(0, 0, 0, 38)
+Toggle.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
+Toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+Toggle.Font = Enum.Font.GothamBold
+Toggle.TextSize = 12
+Toggle.Text = "AUTO: BAT"
+Instance.new("UICorner", Toggle).CornerRadius = UDim.new(0, 6)
+
+local KillFishToggle = Instance.new("TextButton", P1)
+KillFishToggle.Size = UDim2.new(1, 0, 0, 32)
+KillFishToggle.Position = UDim2.new(0, 0, 0, 76)
+KillFishToggle.BackgroundColor3 = Color3.fromRGB(0, 140, 255)
+KillFishToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+KillFishToggle.Font = Enum.Font.GothamBold
+KillFishToggle.TextSize = 11
+KillFishToggle.Text = "ONE-HIT KILL: BẬT"
+Instance.new("UICorner", KillFishToggle).CornerRadius = UDim.new(0, 6)
+
+local function setLag(amount)
+    pcall(function()
+        settings():GetService("NetworkSettings"):SetIncomingReplicationLag(amount)
+    end)
+    if sethiddenproperty then
+        pcall(function()
+            sethiddenproperty(settings():GetService("NetworkSettings"), "IncomingReplicationLag", amount)
+        end)
+    end
+    if setfflag then
+        pcall(function()
+            setfflag("TaskSchedulerMaxStepsPerSec", amount > 0 and "10" or "60")
+        end)
+    end
+end
+
+-- TRANG 2: DỊCH CHUYỂN
+local P2 = Instance.new("Frame", PageC)
+P2.Size = UDim2.new(1, 0, 1, 0)
+P2.BackgroundTransparency = 1
+P2.Visible = false
+
+local TpScroll = Instance.new("ScrollingFrame", P2)
+TpScroll.Size = UDim2.new(1, 0, 1, 0)
+TpScroll.BackgroundTransparency = 1
+TpScroll.CanvasSize = UDim2.new(0, 0, 0, 260)
+TpScroll.ScrollBarThickness = 4
+
+local TpList = Instance.new("UIListLayout", TpScroll)
+TpList.SortOrder = Enum.SortOrder.LayoutOrder
+TpList.Padding = UDim.new(0, 6)
+
+local Islands = {
+    {Name = "Starter Island", Pos = Vector3.new(-41.90, 11.09, 303.40)},
+    {Name = "Jungle Island", Pos = Vector3.new(-1166.36, 10.68, -66.31)},
+    {Name = "Desert Island", Pos = Vector3.new(-51.02, 10.13, -954.41)},
+    {Name = "Snow Island", Pos = Vector3.new(1195.07, 9.38, -284.33)},
+    {Name = "Volcano Island", Pos = Vector3.new(1807.50, 9.17, 1073.44)}
+}
+
+local isRunning = true
+local isOneHoldOn = true
+local FishingSpotCFrame = nil
+
+-- HÀM TELEPORT AN TOÀN (1 PHÁT ĂN NGAY, CHỐNG KÉO NGƯỢC VỀ)
 local function flyToPos(targetPos)
     pcall(function()
         Status.Text = "ĐANG TỰ SÁT & GÂY LAG ĐÁNH LỪA SERVER..."
         
-        -- Gây lag mạnh để cắt đứt liên lạc vị trí với server tạm thời
         setLag(99999)
         
         local char = LocalPlayer.Character
         if char then
             local hum = char:FindFirstChildOfClass("Humanoid")
             if hum then
-                hum.Health =.0 -- Tự sát
+                hum.Health = 0
             else
                 char:BreakJoints()
             end
@@ -25,7 +308,6 @@ local function flyToPos(targetPos)
                     
                     local targetCFrame = CFrame.new(targetPos + Vector3.new(0, 5, 0))
                     
-                    -- Tăng thời gian khóa cứng lên 10 giây để triệt tiêu hoàn toàn việc bị kéo ngược
                     local lockStartTime = tick()
                     local lockConnection
                     lockConnection = RunService.RenderStepped:Connect(function()
@@ -38,16 +320,362 @@ local function flyToPos(targetPos)
                         end
                     end)
                     
-                    -- Ép vị trí liên tục ngay lập tức
                     newRoot.CFrame = targetCFrame
+                    if isRunning then FishingSpotCFrame = targetCFrame end
                     
                     task.wait(2.0)
-                    
-                    -- Khôi phục lại mạng bình thường sau khi server đã nhận diện vị trí mới
                     setLag(0)
-                    Status.Text = "ĐÃ ĐẾN ĐẢO THÀNH CÔNG (1 PHÁT ĂN NGAY)!"
+                    Status.Text = "ĐÃ ĐẾN ĐẢO THÀNH CÔNG!"
                 end
             end)
         end)
     end)
 end
+
+for i, island in ipairs(Islands) do
+    local btn = Instance.new("TextButton", TpScroll)
+    btn.Size = UDim2.new(1, -5, 0, 30)
+    btn.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.Font = Enum.Font.GothamSemibold
+    btn.TextSize = 11
+    btn.Text = "Bay tới: " .. island.Name
+    btn.LayoutOrder = i
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+    
+    btn.MouseButton1Click:Connect(function()
+        task.spawn(function()
+            flyToPos(island.Pos)
+        end)
+    end)
+end
+
+-- TRANG 3: THÔNG TIN
+local P3 = Instance.new("Frame", PageC)
+P3.Size = UDim2.new(1, 0, 1, 0)
+P3.BackgroundTransparency = 1
+P3.Visible = false
+
+local Info = Instance.new("TextLabel", P3)
+Info.Size = UDim2.new(1, 0, 1, 0)
+Info.BackgroundTransparency = 1
+Info.TextColor3 = Color3.fromRGB(200, 200, 200)
+Info.Font = Enum.Font.Gotham
+Info.TextSize = 12
+Info.TextXAlignment = Enum.TextXAlignment.Left
+Info.TextYAlignment = Enum.TextYAlignment.Top
+
+local SECURE_TITLE = "HOANGHAI HUB - FISCH"
+local SECURE_INFO = "Tác giả: HOANGHAI\n- Teleport: Lag giả lập + Khóa cứng 10s.\n- Nút Toggle: Chữ H phóng to siêu nét."
+Info.Text = SECURE_INFO
+
+task.spawn(function()
+    while task.wait(0.5) do
+        pcall(function()
+            if Title.Text ~= SECURE_TITLE then Title.Text = SECURE_TITLE end
+            if not Info.Text:find("HOANGHAI") then Info.Text = SECURE_INFO end
+        end)
+    end
+end)
+
+Tab1.MouseButton1Click:Connect(function()
+    P1.Visible = true; P2.Visible = false; P3.Visible = false
+    Tab1.TextColor3 = Color3.fromRGB(255, 215, 0); Tab2.TextColor3 = Color3.fromRGB(200, 200, 200); Tab3.TextColor3 = Color3.fromRGB(200, 200, 200)
+end)
+Tab2.MouseButton1Click:Connect(function()
+    P1.Visible = false; P2.Visible = true; P3.Visible = false
+    Tab1.TextColor3 = Color3.fromRGB(200, 200, 200); Tab2.TextColor3 = Color3.fromRGB(255, 215, 0); Tab3.TextColor3 = Color3.fromRGB(200, 200, 200)
+end)
+Tab3.MouseButton1Click:Connect(function()
+    P1.Visible = false; P2.Visible = false; P3.Visible = true
+    Tab1.TextColor3 = Color3.fromRGB(200, 200, 200); Tab2.TextColor3 = Color3.fromRGB(200, 200, 200); Tab3.TextColor3 = Color3.fromRGB(255, 215, 0)
+end)
+Tab1.TextColor3 = Color3.fromRGB(255, 215, 0)
+
+Toggle.MouseButton1Click:Connect(function()
+    isRunning = not isRunning
+    if isRunning then
+        Toggle.Text = "AUTO: BAT"
+        TweenService:Create(Toggle, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(0, 170, 0)}):Play()
+        Status.Text = "DA BAT!"
+        local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if root then FishingSpotCFrame = root.CFrame end
+    else
+        Toggle.Text = "AUTO: TAT"
+        TweenService:Create(Toggle, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(170, 0, 0)}):Play()
+        Status.Text = "DA TAT!"
+        FishingSpotCFrame = nil
+        pcall(function()
+            local c = LocalPlayer.Character
+            if c then
+                c.HumanoidRootPart.Anchored = false
+                c.Humanoid.WalkSpeed = 16
+            end
+        end)
+    end
+end)
+
+KillFishToggle.MouseButton1Click:Connect(function()
+    isOneHoldOn = not isOneHoldOn
+    if isOneHoldOn then
+        KillFishToggle.Text = "ONE-HIT KILL: BẬT"
+        TweenService:Create(KillFishToggle, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(0, 140, 255)}):Play()
+    else
+        KillFishToggle.Text = "ONE-HIT KILL: TẮT"
+        TweenService:Create(KillFishToggle, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(120, 120, 120)}):Play()
+    end
+end)
+
+-- HÀM ĐẾM CÁ CHUẨN XÁC
+local function getFish()
+    local count = 0
+    local function check(cont)
+        if cont then
+            for _, i in ipairs(cont:GetChildren()) do
+                if i:IsA("Tool") then
+                    local n = string.lower(i.Name)
+                    if not (n:find("rod") or n:find("cần") or n:find("bait") or n:find("mồi") or n:find("potion") or n:find("thuốc") or n:find("license") or n:find("gps") or n:find("radar") or n:find("pass")) then
+                        count = count + 1
+                    end
+                end
+            end
+        end
+    end
+    check(LocalPlayer.Backpack)
+    check(LocalPlayer.Character)
+    return count
+end
+
+local CUSTOM_MERCHANT_POS = Vector3.new(1264.13, 27.42, -353.30) 
+
+-- HÀM QUÉT TOÀN BỘ UI ĐỘNG / KHUNG MINIGAME ĐỂ CLICK VÉT MÁNG
+local function solveMiniGameFast()
+    local inset = GuiService:GetGuiInset()
+    local clicked = false
+    
+    for _, obj in pairs(PlayerGui:GetDescendants()) do
+        if obj.Visible then
+            local n = string.lower(obj.Name)
+            if n:find("minigame") or n:find("progress") or n:find("container") or n:find("bar") or n:find("prompt") or n:find("circle") or n:find("game") then
+                for _, child in pairs(obj:GetDescendants()) do
+                    if child.Visible and (child:IsA("TextButton") or child:IsA("ImageButton") or child:IsA("Frame") or child:IsA("ImageLabel")) then
+                        local sz = child.AbsoluteSize
+                        local pos = child.AbsolutePosition
+                        if sz.X > 5 and sz.X < 250 and sz.Y > 5 and sz.Y < 250 then
+                            local cx = pos.X + sz.X / 2 + inset.X
+                            local cy = pos.Y + sz.Y / 2 + inset.Y
+                            
+                            VirtualInputManager:SendMouseButtonEvent(cx, cy, 0, true, game, 1)
+                            task.wait(0.001)
+                            VirtualInputManager:SendMouseButtonEvent(cx, cy, 0, false, game, 1)
+                            clicked = true
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return clicked
+end
+
+-- HÀM HỦY DIỆT: ÉP MÁU/TIẾN TRÌNH CÂU VỀ 0 LẬP TỨC (ONE-HIT)
+local function triggerOneHit()
+    pcall(function()
+        for _, gui in pairs(PlayerGui:GetDescendants()) do
+            if gui.Visible and (gui:IsA("Frame") or gui:IsA("TextLabel")) then
+                local name = string.lower(gui.Name)
+                if name:find("progress") or name:find("bar") or name:find("fish") or name:find("health") or name:find("container") or name:find("minigame") then
+                    for _, child in pairs(gui:GetDescendants()) do
+                        if child:IsA("Frame") and (child.Size.X.Scale > 0 or child.Size.X.Offset > 0) then
+                            child.Size = UDim2.new(0, 0, child.Size.Y.Scale, child.Size.Y.Offset)
+                        end
+                    end
+                end
+            end
+        end
+    end)
+end
+
+local function clickBtn(keys)
+    local inset = GuiService:GetGuiInset()
+    for _, obj in pairs(PlayerGui:GetDescendants()) do
+        if (obj:IsA("TextButton") or obj:IsA("TextLabel")) and obj.Visible then
+            local txt = string.lower(obj.Text or "")
+            for _, kw in ipairs(keys) do
+                if txt:find(kw) then
+                    local pos, sz = obj.AbsolutePosition, obj.AbsoluteSize
+                    local cx, cy = pos.X + sz.X/2 + inset.X, pos.Y + sz.Y/2 + inset.Y
+                    VirtualInputManager:SendMouseButtonEvent(cx, cy, 0, true, game, 1)
+                    task.wait(0.05)
+                    VirtualInputManager:SendMouseButtonEvent(cx, cy, 0, false, game, 1)
+                    return true
+                end
+            end
+        end
+    end
+    return false
+end
+
+-- VÒNG LẶP CÂU CHÍNH, KHÓA CHÂN & CHỜ CÁ TĂNG +1 RỒI NGHỈ 5S
+task.spawn(function()
+    while task.wait(0.4) do
+        if not isRunning then
+            pcall(function()
+                if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                    LocalPlayer.Character.HumanoidRootPart.Anchored = false
+                    LocalPlayer.Character.Humanoid.WalkSpeed = 16
+                end
+            end)
+        else
+            pcall(function()
+                local char = LocalPlayer.Character
+                local root = char and char:FindFirstChild("HumanoidRootPart")
+                local hum = char and char:FindFirstChildOfClass("Humanoid")
+                if not root or not hum then return end
+                
+                if not FishingSpotCFrame then 
+                    FishingSpotCFrame = root.CFrame 
+                end
+
+                local fCount = getFish()
+                if fCount >= 50 then
+                    Status.Text = "TÚI ĐẦY -> BAY TỚI FISH MERCHANT..."
+                    local vp = Workspace.CurrentCamera.ViewportSize
+                    VirtualInputManager:SendMouseButtonEvent(vp.X/2, vp.Y/2, 0, true, game, 1)
+                    task.wait(0.05)
+                    VirtualInputManager:SendMouseButtonEvent(vp.X/2, vp.Y/2, 0, false, game, 1)
+                    task.wait(0.2)
+
+                    hum.WalkSpeed = 16; root.Anchored = true
+                    
+                    local dist = (root.Position - CUSTOM_MERCHANT_POS).Magnitude
+                    if dist > 3 then
+                        setLag(99999)
+                        task.wait(9.0)
+                        local tw = TweenService:Create(root, TweenInfo.new(dist/700, Enum.EasingStyle.Linear), {CFrame = CFrame.new(CUSTOM_MERCHANT_POS + Vector3.new(0, 3, 0))})
+                        tw:Play(); tw.Completed:Wait()
+                        setLag(0)
+                    end
+
+                    root.CFrame = CFrame.new(CUSTOM_MERCHANT_POS)
+                    root.Anchored = true; hum.WalkSpeed = 0
+
+                    repeat
+                        Status.Text = "ĐANG BÁN CÁ (CÒN " .. tostring(fCount) .. " CON)..."
+                        VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+                        task.wait(0.1)
+                        VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+                        task.wait(0.5)
+
+                        for _, p in pairs(Workspace:GetDescendants()) do
+                            if p:IsA("ProximityPrompt") then
+                                pcall(function() fireproximityprompt(p) end)
+                            end
+                        end
+                        task.wait(0.5)
+                        clickBtn({"bán", "sell", "confirm", "đồng ý"})
+                        task.wait(1.5)
+                        fCount = getFish()
+                    until fCount == 0 or not isRunning
+
+                    local cStart = tick()
+                    while tick() - cStart < 3 do clickBtn({"tạm biệt", "bye", "thoát", "close", "x"}); task.wait(0.5) end
+
+                    Status.Text = "TÚI ĐÃ VỀ 0 - ĐANG VỀ BÃI CÂU..."
+                    root.Anchored = true; hum.WalkSpeed = 16
+                    
+                    local dBack = (root.Position - FishingSpotCFrame.Position).Magnitude
+                    if dBack > 3 then
+                        setLag(99999)
+                        task.wait(9.0)
+                        local twB = TweenService:Create(root, TweenInfo.new(dBack/700, Enum.EasingStyle.Linear), {CFrame = FishingSpotCFrame})
+                        twB:Play(); twB.Completed:Wait()
+                        setLag(0)
+                    end
+                    root.Anchored = false
+                end
+
+                if not isRunning then return end
+
+                local distToLock = (root.Position - FishingSpotCFrame.Position).Magnitude
+                if distToLock > 3 then
+                    setLag(99999)
+                    task.wait(9.0)
+                    root.Anchored = true
+                    local twB = TweenService:Create(root, TweenInfo.new(dBack/700, Enum.EasingStyle.Linear), {CFrame = FishingSpotCFrame})
+                    twB:Play(); twB.Completed:Wait()
+                    root.Anchored = false
+                    setLag(0)
+                end
+                
+                root.CFrame = FishingSpotCFrame
+                root.Anchored = true
+                hum.WalkSpeed = 0
+
+                local activeTool = char and char:FindFirstChildOfClass("Tool")
+                local isHoldingRod = activeTool and (string.lower(activeTool.Name):find("rod") or string.lower(activeTool.Name):find("cần"))
+
+                if not isHoldingRod then
+                    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.One, false, game)
+                    task.wait(0.05)
+                    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.One, false, game)
+                    task.wait(0.5)
+                    activeTool = char and char:FindFirstChildOfClass("Tool")
+                    isHoldingRod = activeTool and (string.lower(activeTool.Name):find("rod") or string.lower(activeTool.Name):find("cần"))
+                end
+
+                if isHoldingRod then
+                    local vp = Workspace.CurrentCamera.ViewportSize
+                    
+                    local spam = true
+                    task.spawn(function()
+                        while spam and isRunning do
+                            for _, k in ipairs({Enum.KeyCode.Z, Enum.KeyCode.X, Enum.KeyCode.C, Enum.KeyCode.V}) do
+                                if not spam or not isRunning then break end
+                                VirtualInputManager:SendKeyEvent(true, k, false, game)
+                                task.wait(0.25) -- Giữ phím lâu hơn để game nhận diện chắc chắn
+                                VirtualInputManager:SendKeyEvent(false, k, false, game)
+                                task.wait(1.2)  -- Nghỉ giữa các phím chậm rãi hơn
+                            end
+                            task.wait(2.5) -- Nghỉ giữa các vòng skill mới
+                        end
+                    end)
+
+                    Status.Text = "THẢ CẦN & XẢ SKILL..."
+                    pcall(function() activeTool:Activate() end)
+                    VirtualInputManager:SendMouseButtonEvent(vp.X/2, vp.Y/2 - 80, 0, true, game, 1)
+                    task.wait(2)
+                    VirtualInputManager:SendMouseButtonEvent(vp.X/2, vp.Y/2 - 80, 0, false, game, 1)
+
+                    Status.Text = "ĐANG CÂU & CHỜ CÁ TĂNG +1..."
+                    if isOneHoldOn then setLag(99999) end
+
+                    local initialFish = getFish()
+                    local aStart = tick()
+                    
+                    while tick() - aStart < 60 and isRunning and getFish() <= initialFish do 
+                        solveMiniGameFast()
+                        if isOneHoldOn then
+                            triggerOneHit()
+                        end
+                        task.wait(0.01)
+                    end
+
+                    spam = false
+                    if isOneHoldOn then setLag(0) end
+
+                    VirtualInputManager:SendMouseButtonEvent(vp.X/2, vp.Y/2, 0, true, game, 1)
+                    task.wait(0.05)
+                    VirtualInputManager:SendMouseButtonEvent(vp.X/2, vp.Y/2, 0, false, game, 1)
+                    task.wait(0.5)
+
+                    Status.Text = "ĐÃ CỘNG +1 CÁ - TẠM DỪNG 5 GIÂY..."
+                    task.wait(5.0)
+                else
+                    Status.Text = "HÃY ĐẶT CẦN CÂU VÀO Ô SỐ 1!"
+                    task.wait(1)
+                end
+            end)
+        end
+    end
+end)

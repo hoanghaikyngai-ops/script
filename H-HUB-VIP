@@ -196,7 +196,7 @@ local Islands = {
 }
 
 local isRunning = true
-local isOneHitOn = true
+local isOneHoldOn = true
 local LockCFrame = nil
 
 local function flyToPos(targetPos)
@@ -204,17 +204,16 @@ local function flyToPos(targetPos)
         local char = LocalPlayer.Character
         local root = char and char:FindFirstChild("HumanoidRootPart")
         if root then
-            -- 1. Bật ngắt mạng và chờ hiện bảng mất kết nối
-            Status.Text = "ĐANG NGẮT MẠNG (ĐỢI HIỆN BẢNG)..."
+            Status.Text = "ĐANG NGẮT MẠNG (ĐỢI 9 GIÂY)..."
             setLag(99999)
-            task.wait(3.5)
+            task.wait(9.0)
 
-            Status.Text = "ĐÃ MẤT MẠNG - ĐANG BAY TỐC ĐỘ 700..."
+            Status.Text = "ĐÃ HIỆN BẢNG MẤT MẠNG - ĐANG BAY TỐC ĐỘ 700..."
             root.Anchored = true 
             local targetCFrame = CFrame.new(targetPos + Vector3.new(0, 5, 0))
             
             local dist = (root.Position - targetPos).Magnitude
-            local speed = 700 -- Đẩy tốc độ bay lên 700
+            local speed = 700
             local timeToTween = dist / speed
             
             local tw = TweenService:Create(root, TweenInfo.new(timeToTween, Enum.EasingStyle.Linear), {CFrame = targetCFrame})
@@ -223,11 +222,8 @@ local function flyToPos(targetPos)
             if isRunning then LockCFrame = targetCFrame end
             
             tw.Completed:Wait()
-            
-            -- Đợi thêm một chút để ổn định vị trí ở đảo mới
             task.wait(1.0)
             
-            -- 2. Đến nơi an toàn mới tắt lag (khôi phục mạng)
             root.Anchored = false
             setLag(0)
             Status.Text = "ĐÃ ĐẾN NƠI & KHÔI PHỤC MẠNG!"
@@ -253,7 +249,7 @@ for i, island in ipairs(Islands) do
     end)
 end
 
--- TRANG 3: THÔNG TIN & GIỮ TÊN TÁC GIẢ HOANGHAI
+-- TRANG 3: THÔNG TIN
 local P3 = Instance.new("Frame", PageC)
 P3.Size = UDim2.new(1, 0, 1, 0)
 P3.BackgroundTransparency = 1
@@ -269,10 +265,9 @@ Info.TextXAlignment = Enum.TextXAlignment.Left
 Info.TextYAlignment = Enum.TextYAlignment.Top
 
 local SECURE_TITLE = "HOANGHAI HUB - FISCH"
-local SECURE_INFO = "Tác giả: HOANGHAI\n- Tích hợp One-Hit Kill & Auto Sell.\n- Chúc các bạn chơi game vui vẻ!"
+local SECURE_INFO = "Tác giả: HOANGHAI\n- Tích hợp One-Hit Kill & Auto Mini Game.\n- Chúc các bạn chơi game vui vẻ!"
 Info.Text = SECURE_INFO
 
--- 🛡️ Quét ngầm bảo vệ bản quyền giao diện
 task.spawn(function()
     while task.wait(0.5) do
         pcall(function()
@@ -320,8 +315,8 @@ Toggle.MouseButton1Click:Connect(function()
 end)
 
 KillFishToggle.MouseButton1Click:Connect(function()
-    isOneHitOn = not isOneHitOn
-    if isOneHitOn then
+    isOneHoldOn = not isOneHoldOn
+    if isOneHoldOn then
         KillFishToggle.Text = "ONE-HIT KILL: BẬT"
         TweenService:Create(KillFishToggle, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(0, 140, 255)}):Play()
     else
@@ -417,6 +412,29 @@ local function clickBtn(keys)
     return false
 end
 
+--// ============================================================
+--// AUTO MINI GAME (W A D)
+--// ============================================================
+local function K(key, duration)
+    pcall(function()
+        VirtualInputManager:SendKeyEvent(true, key, false, game)
+        task.wait(duration)
+        VirtualInputManager:SendKeyEvent(false, key, false, game)
+    end)
+end
+
+task.spawn(function()
+    while true do
+        task.wait(0.03)
+        if isRunning then
+            K(Enum.KeyCode.W, 0.005)
+            K(Enum.KeyCode.A, 0.005)
+            K(Enum.KeyCode.D, 0.005)
+        end
+    end
+end)
+
+-- VÒNG LẶP CÂU CHÍNH & KHÓA CHÂN
 task.spawn(function()
     while task.wait(0.4) do
         if not isRunning then
@@ -437,7 +455,7 @@ task.spawn(function()
                 local fCount = getFish()
                 if fCount >= 50 then
                     LockCFrame = root.CFrame
-                    Status.Text = "TUI DAY -> BAY TOI FISH MERCHANT..."
+                    Status.Text = "TÚI ĐẦY -> BAY TỚI FISH MERCHANT..."
                     local vp = Workspace.CurrentCamera.ViewportSize
                     VirtualInputManager:SendMouseButtonEvent(vp.X/2, vp.Y/2, 0, true, game, 1)
                     task.wait(0.05)
@@ -449,7 +467,7 @@ task.spawn(function()
                     local dist = (root.Position - CUSTOM_MERCHANT_POS).Magnitude
                     if dist > 3 then
                         setLag(99999)
-                        task.wait(2.5)
+                        task.wait(9.0)
                         local tw = TweenService:Create(root, TweenInfo.new(dist/700, Enum.EasingStyle.Linear), {CFrame = CFrame.new(CUSTOM_MERCHANT_POS + Vector3.new(0, 3, 0))})
                         tw:Play(); tw.Completed:Wait()
                         setLag(0)
@@ -459,7 +477,7 @@ task.spawn(function()
                     root.Anchored = true; hum.WalkSpeed = 0
 
                     repeat
-                        Status.Text = "DANG BAN CA..."
+                        Status.Text = "ĐANG BÁN CÁ..."
                         VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
                         task.wait(0.1)
                         VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
@@ -479,13 +497,13 @@ task.spawn(function()
                     local cStart = tick()
                     while tick() - cStart < 3 do clickBtn({"tạm biệt", "bye", "thoát", "close", "x"}); task.wait(0.5) end
 
-                    Status.Text = "VE BAI CAU..."
+                    Status.Text = "VỀ BÃI CÂU..."
                     root.Anchored = true; hum.WalkSpeed = 16
                     
                     local dBack = (root.Position - LockCFrame.Position).Magnitude
                     if dBack > 3 then
                         setLag(99999)
-                        task.wait(2.5)
+                        task.wait(9.0)
                         local twB = TweenService:Create(root, TweenInfo.new(dBack/700, Enum.EasingStyle.Linear), {CFrame = LockCFrame})
                         twB:Play(); twB.Completed:Wait()
                         setLag(0)
@@ -498,16 +516,18 @@ task.spawn(function()
                 local distToLock = (root.Position - LockCFrame.Position).Magnitude
                 if distToLock > 3 then
                     setLag(99999)
-                    task.wait(2.5)
+                    task.wait(9.0)
                     root.Anchored = true
-                    local twB = TweenService:Create(root, TweenInfo.new(dBack/700, Enum.EasingStyle.Linear), {CFrame = LockCFrame})
+                    local twB = TweenService:Create(root, TweenInfo.new(distToLock/700, Enum.EasingStyle.Linear), {CFrame = LockCFrame})
                     twB:Play(); twB.Completed:Wait()
                     root.Anchored = false
                     setLag(0)
                 end
                 
+                -- Khóa chân tại bãi câu (Anchored = true đến khi dừng hoặc đi bán cá)
                 root.CFrame = LockCFrame
-                root.Anchored = false; hum.WalkSpeed = 0
+                root.Anchored = true
+                hum.WalkSpeed = 0
 
                 -- CHỈ BẤM PHÍM 1 NẾU CHƯA CẦM CẦN TRÊN TAY
                 local activeTool = char and char:FindFirstChildOfClass("Tool")
@@ -524,44 +544,38 @@ task.spawn(function()
 
                 if isHoldingRod then
                     local vp = Workspace.CurrentCamera.ViewportSize
-                    local spam = true
-                    task.spawn(function()
-                        while spam and isRunning do
-                            for _, k in ipairs({Enum.KeyCode.Z, Enum.KeyCode.X, Enum.KeyCode.C, Enum.KeyCode.V}) do
-                                if not spam or not isRunning then break end
-                                VirtualInputManager:SendKeyEvent(true, k, false, game)
-                                task.wait(0.02)
-                                VirtualInputManager:SendKeyEvent(false, k, false, game)
-                            end
-                            task.wait(0.05)
-                        end
-                    end)
 
-                    Status.Text = "THA CAN & XA SKILL..."
+                    Status.Text = "THẢ CẦN & XẢ SKILL..."
                     pcall(function() activeTool:Activate() end)
                     VirtualInputManager:SendMouseButtonEvent(vp.X/2, vp.Y/2 - 80, 0, true, game, 1)
                     task.wait(2)
                     VirtualInputManager:SendMouseButtonEvent(vp.X/2, vp.Y/2 - 80, 0, false, game, 1)
-                    spam = false
 
-                    Status.Text = "DANG DUNG ONE-HIT KILL..."
-                    if isOneHitOn then setLag(99999) end
+                    Status.Text = "ĐANG CÂU & CHỜ CÁ TĂNG +1..."
+                    if isOneHoldOn then setLag(99999) end
 
+                    local initialFish = getFish()
                     local aStart = tick()
-                    while tick() - aStart < 60 and isRunning and getFish() < 50 do 
+                    
+                    -- Hoạt động đến khi cá trong kho cộng thêm 1 hoặc hết giờ 60s
+                    while tick() - aStart < 60 and isRunning and getFish() <= initialFish do 
                         solveArrows()
-                        if isOneHitOn then
+                        if isOneHoldOn then
                             triggerOneHit()
                         end
                         task.wait()
                     end
 
-                    if isOneHitOn then setLag(0) end
+                    if isOneHoldOn then setLag(0) end
 
                     VirtualInputManager:SendMouseButtonEvent(vp.X/2, vp.Y/2, 0, true, game, 1)
                     task.wait(0.05)
                     VirtualInputManager:SendMouseButtonEvent(vp.X/2, vp.Y/2, 0, false, game, 1)
                     task.wait(0.5)
+
+                    -- Đã bắt được cá (+1), ngừng khoảng 5 giây trước khi vào vòng lặp câu tiếp hoặc đi bán
+                    Status.Text = "ĐÃ BẮT ĐƯỢC CÁ - TẠM DỪNG 5 GIÂY..."
+                    task.wait(5.0)
                 else
                     Status.Text = "HÃY ĐẶT CẦN CÂU VÀO Ô SỐ 1!"
                     task.wait(1)

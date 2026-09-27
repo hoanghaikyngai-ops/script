@@ -1,5 +1,5 @@
 -- ====================================================
--- HOANGHAI HUB - FISCH (CÓ BẢNG ĐANG TẢI & DI DỜI UI GIAO DIỆN)
+-- HOANGHAI HUB - FISCH (FULL HIỆU ỨNG LẤP LÁNH & FIX TELEPORT)
 -- ====================================================
 local Players = game:GetService("Players")
 local VirtualInputManager = game:GetService("VirtualInputManager")
@@ -45,15 +45,15 @@ LoadText.TextColor3 = Color3.fromRGB(255, 215, 0)
 LoadText.Font = Enum.Font.GothamBold
 LoadText.TextSize = 13
 
-task.wait(1.2) -- Giả lập thời gian tải để hiển thị mượt mà
+task.wait(1.2)
 
--- ================= GIAO DIỆN CHÍNH (ĐÃ DỜI XUỐNG DƯỚI & SANG TRÁI) =================
+-- ================= GIAO DIỆN CHÍNH =================
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "HHubUI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = PlayerGui
 
--- NÚT TOGGLE (ĐÓNG/MỞ TAB) - Đã dời sang góc trái dưới
+-- NÚT TOGGLE (ĐÓNG/MỞ TAB) - Lệch sang trái dưới, kèm hiệu ứng lấp lánh
 local ToggleBtn = Instance.new("TextButton", ScreenGui)
 ToggleBtn.Size = UDim2.new(0, 52, 0, 52)
 ToggleBtn.Position = UDim2.new(0, 20, 0.7, 0)
@@ -93,7 +93,7 @@ StaticTextH.TextSize = 44
 StaticTextH.TextXAlignment = Enum.TextXAlignment.Center
 StaticTextH.TextYAlignment = Enum.TextYAlignment.Center
 
--- BẢNG MENU CHÍNH - Đã dời xuống dưới và sang trái
+-- BẢNG MENU CHÍNH - Kèm hiệu ứng viền lấp lánh
 local Main = Instance.new("Frame", ScreenGui)
 Main.Size = UDim2.new(0, 420, 0, 260)
 Main.Position = UDim2.new(0.05, 0, 0.55, 0)
@@ -117,7 +117,6 @@ task.spawn(function()
     end
 end)
 
--- Xóa bảng đang tải sau khi UI chính hiện lên
 pcall(function() LoadingGui:Destroy() end)
 
 local uiVisible = true
@@ -297,6 +296,7 @@ local function simulateHeavyLagSpike(duration)
     end
 end
 
+-- HÀM TELEPORT CHUẨN: CHẶT KHÓA NGAY KHI VỪA HỒI SINH
 local function teleportAndRespawnAtIsland(targetPos)
     pcall(function()
         local char = LocalPlayer.Character
@@ -305,43 +305,53 @@ local function teleportAndRespawnAtIsland(targetPos)
 
         Status.Text = "ĐANG TẠO NHIỄU MẠNG & BÙNG NỔ LAG GIẢ LẬP..."
         simulateHeavyLagSpike(0.7)
-        hum.Health = 0 
         
-        LocalPlayer.CharacterAdded:Wait()
-        task.wait(1.2)
-        
-        local newChar = LocalPlayer.Character
-        local newRoot = newChar:WaitForChild("HumanoidRootPart")
-        local newHum = newChar:WaitForChild("Humanoid")
+        local isTeleporting = true
+        local connection
+        connection = LocalPlayer.CharacterAdded:Connect(function(newChar)
+            if not isTeleporting then return end
+            isTeleporting = false
+            if connection then connection:Disconnect() end
 
-        Status.Text = "HỒI SINH - ÉP TỌA ĐỘ VÀ KÈM LAG CHỐNG QUÉT..."
-        newRoot.CFrame = CFrame.new(targetPos + Vector3.new(0, 3, 0))
-        
-        simulateHeavyLagSpike(1.0)
-        task.wait(0.3)
-
-        Status.Text = "ĐANG KHÓA CỨNG ĐỨNG YÊN LIÊN TỤC 17 GIÂY..."
-        
-        local lockStart = tick()
-        while tick() - lockStart < 17 do
-            pcall(function()
+            task.spawn(function()
+                local newRoot = newChar:WaitForChild("HumanoidRootPart", 5)
+                local newHum = newChar:WaitForChild("Humanoid", 5)
+                
                 if newRoot and newHum then
+                    Status.Text = "HỒI SINH - ÉP TỌA ĐỘ VÀ KÈM LAG CHỐNG QUÉT..."
                     newRoot.Anchored = true
                     newHum.WalkSpeed = 0
                     newHum.JumpPower = 0
+                    
+                    newRoot.CFrame = CFrame.new(targetPos + Vector3.new(0, 3, 0))
+                    simulateHeavyLagSpike(1.2)
+                    
+                    Status.Text = "ĐANG KHÓA CỨNG ĐỨNG YÊN LIÊN TỤC 17 GIÂY..."
+                    local lockStart = tick()
+                    while tick() - lockStart < 17 do
+                        pcall(function()
+                            if newRoot and newHum then
+                                newRoot.Anchored = true
+                                newHum.WalkSpeed = 0
+                                newHum.JumpPower = 0
+                            end
+                        end)
+                        task.wait(0.15)
+                    end
+
+                    newRoot.Anchored = false
+                    newHum.WalkSpeed = 16
+                    newHum.JumpPower = 50
+                    Status.Text = "ĐÃ AN TOÀN - SẴN SÀNG CÀY CUỐC!"
+                    
+                    if isRunning then 
+                        FishingSpotCFrame = newRoot.CFrame 
+                    end
                 end
             end)
-            task.wait(0.15)
-        end
+        end)
 
-        newRoot.Anchored = false
-        newHum.WalkSpeed = 16
-        newHum.JumpPower = 50
-        Status.Text = "ĐÃ AN TOÀN - SẴN SÀNG CÀY CUỐC!"
-        
-        if isRunning then 
-            FishingSpotCFrame = newRoot.CFrame 
-        end
+        hum.Health = 0 
     end)
 end
 
@@ -375,7 +385,7 @@ Info.Font = Enum.Font.Gotham
 Info.TextSize = 12
 Info.TextXAlignment = Enum.TextXAlignment.Left
 Info.TextYAlignment = Enum.TextYAlignment.Top
-Info.Text = "Tác giả: HOANGHAI\n- Bản fix sạch sẽ, có bảng tải & dời UI an toàn."
+Info.Text = "Tác giả: HOANGHAI\n- Bản chuẩn full hiệu ứng lấp lánh & fix teleport."
 
 Tab1.MouseButton1Click:Connect(function()
     P1.Visible = true; P2.Visible = false; P3.Visible = false

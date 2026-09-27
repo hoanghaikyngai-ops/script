@@ -1,5 +1,5 @@
 -- ====================================================
--- HOANGHAI HUB - FISCH (BẢN VIỆT HÓA + UPDATE KHO CÁ)
+-- HOANGHAI HUB - FISCH (BẢN VIỆT HÓA + UPDATE KHO CÁ + QUAY MẶT NPC)
 -- ====================================================
 local Players = game:GetService("Players")
 local VirtualInputManager = game:GetService("VirtualInputManager")
@@ -13,7 +13,7 @@ local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
 -- 🛡️ Chống trùng lặp UI
-local SECURE_ID = "HOANGHAI_FISCH_PUBLIC_V2"
+local SECURE_ID = "HOANGHAI_FISCH_PUBLIC_V3"
 if getgenv()[SECURE_ID] then
     pcall(function() PlayerGui.HHubUI:Destroy() end)
     return
@@ -361,7 +361,7 @@ Info.TextXAlignment = Enum.TextXAlignment.Left
 Info.TextYAlignment = Enum.TextYAlignment.Top
 
 local SECURE_TITLE = "HOANGHAI HUB - FISCH"
-local SECURE_INFO = "Tác giả: HOANGHAI\n- Tự chọn mốc số cá để bán.\n- Dịch chuyển: Khóa cứng 15s an toàn."
+local SECURE_INFO = "Tác giả: HOANGHAI\n- Tự quay mặt vào NPC.\n- Đã sửa lỗi kẹt ảnh cá."
 Info.Text = SECURE_INFO
 
 task.spawn(function()
@@ -441,7 +441,7 @@ local function getFish()
     return count
 end
 
--- VÒNG LẶP CẬP NHẬT UI HIỂN THỊ SỐ CÁ MỖI 1 GIÂY
+-- VÒNG LẶP CẬP NHẬT UI HIỂN THỊ SỐ CÁ
 task.spawn(function()
     while task.wait(1) do
         pcall(function()
@@ -538,14 +538,17 @@ task.spawn(function()
                 end
 
                 local fCount = getFish()
-                -- ĐÃ SỬA THÀNH BIẾN MỚI: maxFishCapacity
                 if fCount >= maxFishCapacity then
-                    Status.Text = "TÚI ĐÃ ĐẠT MỐC -> BAY TỚI THƯƠNG NHÂN..."
+                    Status.Text = "TÚI ĐÃ ĐẠT MỐC -> ĐANG TẮT ẢNH CÁ..."
                     local vp = Workspace.CurrentCamera.ViewportSize
-                    VirtualInputManager:SendMouseButtonEvent(vp.X/2, vp.Y/2, 0, true, game, 1)
-                    task.wait(0.05)
-                    VirtualInputManager:SendMouseButtonEvent(vp.X/2, vp.Y/2, 0, false, game, 1)
-                    task.wait(0.2)
+                    
+                    -- NHẤP 2 LẦN ĐỂ ĐẢM BẢO TẮT ẢNH CÁ
+                    for _ = 1, 2 do
+                        VirtualInputManager:SendMouseButtonEvent(vp.X/2, vp.Y/2, 0, true, game, 1)
+                        task.wait(0.05)
+                        VirtualInputManager:SendMouseButtonEvent(vp.X/2, vp.Y/2, 0, false, game, 1)
+                        task.wait(0.3)
+                    end
 
                     hum.WalkSpeed = 16; root.Anchored = true
                     
@@ -556,6 +559,28 @@ task.spawn(function()
                     end
 
                     root.CFrame = CFrame.new(CUSTOM_MERCHANT_POS)
+                    task.wait(0.2)
+
+                    -- TÌM VÀ QUAY MẶT VÀO NPC BÁN CÁ
+                    local targetPart = nil
+                    for _, p in pairs(Workspace:GetDescendants()) do
+                        if p:IsA("ProximityPrompt") then
+                            local part = p.Parent
+                            if part and part:IsA("BasePart") then
+                                if (part.Position - root.Position).Magnitude < 15 then
+                                    targetPart = part
+                                    break
+                                end
+                            end
+                        end
+                    end
+
+                    if targetPart then
+                        local lookPos = Vector3.new(targetPart.Position.X, root.Position.Y, targetPart.Position.Z)
+                        root.CFrame = CFrame.lookAt(root.Position, lookPos)
+                        task.wait(0.2)
+                    end
+
                     root.Anchored = true; hum.WalkSpeed = 0
 
                     repeat

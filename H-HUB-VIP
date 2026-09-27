@@ -1,5 +1,5 @@
 -- ====================================================
--- HOANGHAI HUB - FISCH (LOGIC BÁN CÁ CHUẨN XÁC, BÁN TẤT CẢ, VỀ BÃI CÂU)
+-- HOANGHAI HUB - FISCH (SỬA LỖI XOAY MẶT & ĐI SÁT NPC BÁN CÁ)
 -- ====================================================
 local Players = game:GetService("Players")
 local VirtualInputManager = game:GetService("VirtualInputManager")
@@ -13,7 +13,7 @@ local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
 -- 🛡️ Chống trùng lặp UI
-local SECURE_ID = "HOANGHAI_FISCH_PUBLIC_V11"
+local SECURE_ID = "HOANGHAI_FISCH_PUBLIC_V12"
 if getgenv()[SECURE_ID] then
     pcall(function() PlayerGui.HHubUI:Destroy() end)
 end
@@ -347,7 +347,7 @@ Info.TextXAlignment = Enum.TextXAlignment.Left
 Info.TextYAlignment = Enum.TextYAlignment.Top
 
 local SECURE_TITLE = "HOANGHAI HUB - FISCH"
-local SECURE_INFO = "Tác giả: HOANGHAI\n- Tự động click tắt ảnh cá.\n- Tự động tìm 'Bán tất cả' và 'Tạm biệt'."
+local SECURE_INFO = "Tác giả: HOANGHAI\n- Đã sửa lỗi đi sát và quay mặt chuẩn xác vào NPC bán cá."
 Info.Text = SECURE_INFO
 
 task.spawn(function()
@@ -545,7 +545,7 @@ task.spawn(function()
 
                     hum.WalkSpeed = 16; root.Anchored = true
                     
-                    -- 2. BAY MƯỢT ĐẾN NPC BÁN CÁ
+                    -- 2. BAY MƯỢT ĐẾN GẦN NPC BÁN CÁ
                     local dist = (root.Position - CUSTOM_MERCHANT_POS).Magnitude
                     local merchantTween = TweenService:Create(root, TweenInfo.new(dist / 60, Enum.EasingStyle.Linear), {CFrame = CFrame.new(CUSTOM_MERCHANT_POS + Vector3.new(0, 3, 0))})
                     merchantTween:Play(); merchantTween.Completed:Wait()
@@ -553,7 +553,7 @@ task.spawn(function()
                     root.CFrame = CFrame.new(CUSTOM_MERCHANT_POS)
                     task.wait(0.4)
 
-                    -- 3. TÌM CHÍNH XÁC PROXIMITYPROMPT CỦA NPC BÁN CÁ
+                    -- 3. TÌM PART VÀ PROXIMITYPROMPT CỦA NPC BÁN CÁ
                     local targetPrompt = nil
                     local targetPart = nil
                     
@@ -566,7 +566,7 @@ task.spawn(function()
                                 local distanceToPlayer = (parent.Position - root.Position).Magnitude
                                 
                                 if (parentName:find("merchant") or parentName:find("fish") or parentName:find("sell") or parentName:find("fishmonger")) 
-                                   and distanceToMerchant < 25 and distanceToPlayer < 5 then
+                                   and distanceToMerchant < 25 and distanceToPlayer < 6 then
                                     targetPrompt = obj
                                     targetPart = parent
                                     break
@@ -576,7 +576,7 @@ task.spawn(function()
                     end
 
                     if not targetPrompt then
-                        local shortestDist = 4
+                        local shortestDist = 6
                         for _, obj in pairs(Workspace:GetDescendants()) do
                             if obj:IsA("ProximityPrompt") then
                                 local parent = obj.Parent
@@ -592,10 +592,12 @@ task.spawn(function()
                         end
                     end
 
+                    -- ĐI SÁT VÀ XOAY MẶT CHUẨN XÁC VÀO NPC
                     if targetPart then
-                        root.CFrame = CFrame.new(targetPart.Position + Vector3.new(0, 1.0, 0))
-                        local lookPos = Vector3.new(targetPart.Position.X, root.Position.Y, targetPart.Position.Z)
-                        root.CFrame = CFrame.lookAt(root.Position, lookPos)
+                        -- Đứng sát ngay cạnh NPC (cách 1.5 stud phía trước)
+                        local npcPos = targetPart.Position
+                        local targetStandPos = CFrame.new(npcPos + Vector3.new(0, 0, 2), npcPos)
+                        root.CFrame = targetStandPos
                         task.wait(0.2)
                     end
 
@@ -603,7 +605,7 @@ task.spawn(function()
 
                     -- 4. BẬT E MỞ HỘI THOẠI VÀ BÁN TẤT CẢ CHO ĐẾN KHI HẾT CÁ
                     repeat
-                        Status.Text = "ĐANG MỞ HỘI THOẠI & BÁN CÁ (CÒN " .. tostring(fCount) .. " CON)..."
+                        Status.Text = "ĐANG BÁN CÁ (CÒN " .. tostring(fCount) .. " CON)..."
                         
                         if targetPrompt then
                             pcall(function() fireproximityprompt(targetPrompt) end)
@@ -614,7 +616,6 @@ task.spawn(function()
                         VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
                         task.wait(0.6)
 
-                        -- TÌM VÀ BẤM NÚT BÁN TẤT CẢ (HOẶC BÁN / SELL)
                         clickBtn({"bán tất cả", "sell all", "bán", "sell", "confirm", "đồng ý"})
                         task.wait(1.5)
                         fCount = getFish()
